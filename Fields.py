@@ -3,14 +3,13 @@ import PrimitiveFields
 
 def drawCellField(cellField):
     import matplotlib.pyplot as plt
-    import numpy as np
 
-    #a = np.random.random((16, 16))
     map = plt.imshow(cellField.raw, cmap='hot', interpolation='nearest')
     plt.colorbar(map)
     plt.show()
 
-class parameterCellField(object):
+
+class parameterCellField():
     # a parameterCellField does not have a boundary
     def __init__(self, mesh, value=0, primitiveField=None):
         self.mesh = mesh
@@ -73,6 +72,14 @@ class parameterCellField(object):
         PrimitiveFields.fillWithRandomIntegers(self.raw)
 
 
+class variableCellField(parameterCellField):
+
+    def __init__(self, mesh, value=0, primitiveField=None):
+        super().__init__(mesh, value, primitiveField)
+
+        self._boundary = {}
+
+
 class parameterFaceField:
     # access functions to underlying primitive structure
     def __init__(self, mesh, value=0):
@@ -93,15 +100,6 @@ class parameterFaceField:
         self._bw = self._entries_EW[:, :1]
         self._bn = self._entries_NS[:1, :]
         self._bs = self._entries_NS[-1:, :]
-
-    # def setValues(self, field_x, field_y):
-    #     self._entries_EW[:, :] = field_x
-    #     self._entries_NS[:, :] = field_y
-    #
-    # # all these needed?
-    # def setInternalValues(self, field_x, field_y):
-    #     self._entries_EW[:, 1:-1] = field_x
-    #     self._entries_NS[1:-1, :] = field_y
 
 #-------- defining all getters and setters:
 
@@ -190,61 +188,3 @@ class parameterFaceField:
     @bs.setter
     def bs(self, x):
         self._bs[:,:] = x
-
-        # #needed?
-        # self.internal['X'] =
-        # self.boundary['X'] = self._entries_EW[:,::mesh.cells_x]
-
-
-        # #needed?
-        # self.internal['Y'] =
-        # self.boundary['Y'] = self._entries_NS[::mesh.cells_y, :]
-    #
-    # def getEastValues(self):
-    #     return self.eastValues
-    #
-    # def getWestValues(self):
-    #     return self.westValues
-    #
-    # def getNorthValues(self):
-    #     return self.northValues
-    #
-    # def getSouthValues(self):
-    #     return self.southValues
-
-    # make face.e() method, also for writing, similar for other directions
-#     def be(self):
-#         return self.be
-#         #return self._entries_EW[:,-1:]
-#
-#     def bw(self):
-#         return self.bw
-# #        return self._entries_EW[:, :1]
-#
-#     def bn(self):
-#         return self.bn
-# #        return self._entries_NS[:1, :]
-#
-#     def bs(self):
-#         return self.bs
-# #        return self._entries_NS[-1:, :]
-
-
-    # def setBoudnaryValues(self, field_n, field_e, field_s, field_w):
-    #     self.boundary['X'][:,0:1] = field_w
-    #     self.boundary['X'][:,-1:] = field_e
-    #     self.boundary['Y'][0:1, :] = field_n
-    #     self.boundary['Y'][-1:, :] = field_s
-    #
-    # # should be implemented as overload
-    # def setBoudnaryValuesScalar(self, value):
-    #     self.boundary['X'][:, 0:1] = value
-    #     self.boundary['X'][:, -1:] = value
-    #     self.boundary['Y'][0:1, :] = value
-    #     self.boundary['Y'][-1:, :] = value
-
-# class variableCellField(object):
-#
-#class variableFaceField(object):
-
-

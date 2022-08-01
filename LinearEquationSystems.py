@@ -13,24 +13,13 @@ def createCoefficientMatrix(a_e,a_w,a_n,a_s,a_p, S):
     a_p_serial = np.reshape(a_p, a_p.size)
     S_serial = np.reshape(S, S.size)
 
-    print("ae\t",a_e_serial)
-    print("aw\t",a_w_serial)
-    print("an\t", a_n_serial)
-    print("as\t", a_s_serial)
-    print("ap\t",a_p_serial)
-    print("s\t",S_serial)
-
     A = np.diag(a_p_serial)
     A = A+np.diag(a_e_serial[:-1], 1)
     A = A+np.diag(a_w_serial[1:], -1)
     A = A+np.diag(a_s_serial[:-nx], nx)
     A = A+np.diag(a_n_serial[nx:], -nx)
 
-
     return A,S_serial
-
-
-
 
 def solveLinearSystem(A,b):
     return np.linalg.solve(A, b)

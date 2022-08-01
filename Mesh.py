@@ -1,7 +1,7 @@
 # mesh class should only hold meta data
 import Fields
 
-class cartesian2D(object):
+class cartesian2D():
 
     def __init__(self, len_x=1, len_y=1, res = 10):
         ### a regular, rectangular mesh with nb of cells in [x,y] direction, according to dimensions parameter
@@ -26,8 +26,4 @@ class cartesian2D(object):
         ff.bs = 2 / (self.uniformSpacing)
 
         self.invCellDist = ff
-    #
-    # def getBoundaryNames(self):
-    #     # default boundary names for cartesian2D mesh
-    #     return ['north', 'east', 'south', 'west']
 

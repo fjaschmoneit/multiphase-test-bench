@@ -1,18 +1,6 @@
-#import numpy as np
-#import importlib
-import numpy as np
+import FlowModels, Mesh, Fields, Differentiation, LinearEquationSystems
 
-import FlowModels, Mesh, Fields, Interpolation, Differentiation, LinearEquationSystems
-# importlib.reload(Differentiation)
-# importlib.reload(Fields)
-# importlib.reload(Interpolation)
-# importlib.reload(Mesh)
-# importlib.reload(LineartEquationSystems)
-# importlib.reload(flowModels)
-# import Fields, Interpolation, Mesh, flowModels
-# import LineartEquationSystems
-
-class simulation(object):
+class simulation():
 
     def __init__(self):
         self.fieldDict = {}
@@ -33,10 +21,8 @@ class simulation(object):
         # print("centralDiff faceField entire x\n",gamma_f.ff_x)
         # print("centralDiff faceField entire y\n",gamma_f.ff_y)
         self.T = Fields.parameterCellField( mesh=self.mesh, value=0 )
-        Fields.drawCellField(self.T)
 
         self.T.fillWithRandomIntegers()
-        Fields.drawCellField(self.T)
 
         #print("T = \n", T.raw)
 
@@ -47,14 +33,11 @@ class simulation(object):
         fluxes = FlowModels.scalarDiffusion(mesh=self.mesh, field=self.T, diffCoeff=10)
 
         self.A, self.b = LinearEquationSystems.createCoefficientMatrix(*fluxes)
-        print(self.A)
-        print(self.b)
 
 
     def execute(self):
         x = LinearEquationSystems.solveLinearSystem(self.A,self.b)
         self.T.raw[:,:] = x.reshape(self.T.ny, self.T.nx)
-        print(self.T.raw)
         Fields.drawCellField(self.T)
 
 
