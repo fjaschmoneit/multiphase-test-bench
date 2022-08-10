@@ -27,3 +27,5 @@ class cartesian2D():
 
         self.invCellDist = ff
 
+    def getStats(self):
+        return self.nbCells

@@ -1,31 +1,49 @@
-import PrimitiveFields
+import PrimitiveFields, LinearEquationSystems
 
 
 def drawCellField(cellField):
     import matplotlib.pyplot as plt
 
-    map = plt.imshow(cellField.raw, cmap='hot', interpolation='nearest')
+    map = plt.imshow(cellField._raw, cmap='hot', interpolation='nearest')
     plt.colorbar(map)
     plt.show()
+
+
+def newField(fieldType, mesh, geometry=None):
+    if fieldType == 'vectorField':
+        if geometry is None:
+            return parameterFaceField(mesh)
+        else:
+            return variableFaceField(mesh, geometry)
+    elif fieldType == 'scalarField':
+        if geometry is None:
+            return parameterCellField(mesh)
+        else:
+            return variableCellField(mesh, geometry)
+
+    elif fieldType == 'scalar':
+        return 0.0
+    else:
+        print("unknown field type: ", fieldType)
 
 
 class parameterCellField():
     # a parameterCellField does not have a boundary
     def __init__(self, mesh, value=0, primitiveField=None):
-        self.mesh = mesh
-        self.type = 'parameterCellField'
-        self.nx = mesh.cells_x
-        self.ny = mesh.cells_y
+        self._mesh = mesh
+        self._type = 'parameterCellField'
+        self._nx = mesh.cells_x
+        self._ny = mesh.cells_y
 
         if primitiveField is not None:
-            self.raw = primitiveField
+            self._raw = primitiveField
         else:
-            self.raw = PrimitiveFields.newCellField( mesh=mesh, value=value )
+            self._raw = PrimitiveFields.newCellField( mesh=mesh, value=value )
 
-        self._bw = self.raw[:, :1]
-        self._be = self.raw[:, -1:]
-        self._bn = self.raw[:1, :]
-        self._bs = self.raw[-1:, :]
+        self._bw = self._raw[:, :1]
+        self._be = self._raw[:, -1:]
+        self._bn = self._raw[:1, :]
+        self._bs = self._raw[-1:, :]
 
     @property
     def be(self):
@@ -56,34 +74,44 @@ class parameterCellField():
         self._bs[:, :] = x
 
     def __add__(self, other):
-        return parameterCellField( mesh=self.mesh, primitiveField=self.raw + other.raw )
+        return parameterCellField( mesh=self._mesh, primitiveField=self._raw + other._raw )
 
     def __sub__(self, other):
-        return parameterCellField(mesh=self.mesh, primitiveField=self.raw - other.raw)
+        return parameterCellField(mesh=self._mesh, primitiveField=self._raw - other._raw)
 
     def __neg__(self):
-        return parameterCellField(mesh=self.mesh, primitiveField=-self.raw)
+        return parameterCellField(mesh=self._mesh, primitiveField=-self._raw)
 
 
     def fillWithConsecutiveValues(self):
-        PrimitiveFields.fillWithConsecutiveValues(self.raw)
+        PrimitiveFields.fillWithConsecutiveValues(self._raw)
 
     def fillWithRandomIntegers(self):
-        PrimitiveFields.fillWithRandomIntegers(self.raw)
+        PrimitiveFields.fillWithRandomIntegers(self._raw)
 
 
 class variableCellField(parameterCellField):
 
-    def __init__(self, mesh, value=0, primitiveField=None):
+    def __init__(self, mesh, geometry, value=0, primitiveField=None):
         super().__init__(mesh, value, primitiveField)
+        self._type = 'variableCellField'
+        self._boundary = dict.fromkeys(geometry.getBoundaryNames(), None)
+        self._A = None
+        self._b = None
 
-        self._boundary = {}
+
+    def setBoundaryCondition(self, boundaryName, boundaryType, kwargs=None):
+        self._boundary[boundaryName] = boundaryType
+
+    def solve(self):
+        x = LinearEquationSystems.solveLinearSystem(self._A, self._b)
+        self._raw[:, :] = x.reshape(self._ny, self._nx)
 
 
 class parameterFaceField:
     # access functions to underlying primitive structure
-    def __init__(self, mesh, value=0):
-        self.type = 'parameterFaceField'
+    def __init__(self, mesh, value=0, primitiveField=None):
+        self._type = 'parameterFaceField'
 
         self._entries_EW = PrimitiveFields.newFaceField_x( mesh, value )
         self._entries_NS = PrimitiveFields.newFaceField_y(mesh, value)
@@ -188,3 +216,15 @@ class parameterFaceField:
     @bs.setter
     def bs(self, x):
         self._bs[:,:] = x
+
+
+class variableFaceField(parameterFaceField):
+
+    def __init__(self, mesh, geometry, value=0, primitiveField=None):
+        super().__init__(mesh, value, primitiveField)
+
+        self._type = 'variableFaceField'
+        self._boundary = dict.fromkeys(geometry.getBoundaryNames(), None)
+
+    def setBoundaryCondition(self, boundaryName, boundaryType, kwargs=None):
+        self._boundary[boundaryName] = boundaryType
