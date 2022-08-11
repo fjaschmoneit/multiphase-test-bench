@@ -16,17 +16,17 @@ def fillWithRandomIntegers(primitiveField):
     primitiveField[:,:] = np.random.randint( low=0, high=10, size=primitiveField.shape )
 
 def newCellField(mesh, value):
-    cf = np.ndarray(shape=(mesh.cells_y, mesh.cells_x), dtype=float, order='C')
+    cf = np.ndarray(shape=(mesh._cells_y, mesh._cells_x), dtype=float, order='C')
     setInitialValue(cf, value)
     return cf
 
 def newFaceField_x(mesh, value):
-    ff = np.ndarray(shape=(mesh.cells_y, mesh.cells_x+1), dtype=float, order='C')
+    ff = np.ndarray(shape=(mesh._cells_y, mesh._cells_x+1), dtype=float, order='C')
     setInitialValue(ff, value)
     return ff
 
 def newFaceField_y(mesh, value):
-    ff = np.ndarray(shape=(mesh.cells_y+1, mesh.cells_x), dtype=float, order='C')
+    ff = np.ndarray(shape=(mesh._cells_y+1, mesh._cells_x), dtype=float, order='C')
     setInitialValue(ff, value)
     return ff
 

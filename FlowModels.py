@@ -1,20 +1,20 @@
 import Fields, LinearEquationSystems
 
-
-
 class ScalarConvectionDiffusion():
-    def __init__(self, scalarFieldName='s', velocityFieldName='U', diffusionCoefficientName='D'):
+    def __init__(self, scalarFieldName='s', velocityFieldName='U', diffusionCoefficientName='D', sourceFieldName='R'):
         self._variables = {
             scalarFieldName: 'scalarField'
         }
         self._parameters = {
             velocityFieldName: 'vectorField',
+            sourceFieldName : 'scalarField',
             diffusionCoefficientName: 'scalar'
         }
         self._properties = {
-            'diffusionCoefficient' : 1.49e-9, # [m^2/s]
-            'scalarFieldName' : scalarFieldName,
-            'velocityFieldName' : velocityFieldName,
+            'diffusionCoefficient': 1,
+            'sourceFieldName': sourceFieldName,
+            'scalarFieldName': scalarFieldName,
+            'velocityFieldName': velocityFieldName
         }
         self.availableBoundaryConditions = None
 
@@ -24,12 +24,18 @@ class ScalarConvectionDiffusion():
     def createLinearEquationSystems(self, mesh, fields):
 
         # select correct field:
-        field = fields[self._properties['scalarFieldName']]
+        depField = fields[self._properties['scalarFieldName']]
+        sourceField = fields[self._properties['sourceFieldName']]
 
-        fluxes = self.createMatrixCorefficients(mesh=mesh, field=field, diffCoeff=self._properties['diffusionCoefficient'])
-        field._A, field._b = LinearEquationSystems.createCoefficientMatrix(*fluxes)
+        fluxes = self.createMatrixCorefficients(
+            mesh=mesh,
+            field=depField,
+            diffCoeff=self._properties['diffusionCoefficient'],
+            sourceField=sourceField)
 
-    def createMatrixCorefficients(self, mesh, field, diffCoeff):
+        depField._A, depField._b = LinearEquationSystems.createCoefficientMatrix(*fluxes)
+
+    def createMatrixCorefficients(self, mesh, field, diffCoeff, sourceField):
         ### returning coefficient vectors for subsequent coefficient matrix assembly and coeff vector
 
         faceFluxes = Fields.parameterFaceField(mesh=mesh)
@@ -37,7 +43,7 @@ class ScalarConvectionDiffusion():
 
         # a mesh method
         faceArea = Fields.parameterFaceField(mesh=mesh, value=1.0)
-
+        #cellVolumes = mesh.getCellVolumes()
 
         fax = faceArea.entries_EW
         fay = faceArea.entries_NS
@@ -56,20 +62,12 @@ class ScalarConvectionDiffusion():
         a_n = -Fields.parameterCellField(mesh=mesh, primitiveField=faceFluxes.n)
         a_s = -Fields.parameterCellField(mesh=mesh, primitiveField=faceFluxes.s)
 
-        s_u = Fields.parameterCellField(mesh=mesh, value=0)
+        s_u = sourceField * mesh._uniformSpacing *1.0
 
         a_p = -(a_e + a_w + a_n + a_s)
 
         # fixing boundary conditions
-
-        # constant boundary values, should be read from field parameter
-        Tw = 100
-        Te = 500
-        Tn = 2
-        Ts = 1
-
         if field._boundary['top'] == 'zeroGradient':
-            # defining neumann BC at north:
             a_p.bn += a_n.bn
             a_n.bn = 0
         else:
@@ -101,21 +99,6 @@ class ScalarConvectionDiffusion():
             s_u.be -= a_e.be * Te
             a_e.be = 0
 
-        #
-        # # defining vNeumann BC at south:
-        # a_p.bs += a_s.bs
-        # # s_u.bs += 0
-        #
-        # a_s.bs = 0
-
-        # defining Dirichlet BC at east/west boundaries:
-        # should be read from field parameter
-        #
-        # s_u.be -= a_e.be * Te
-        # a_e.be = 0
-        #
-        # s_u.bw -= a_w.bw * Tw
-        # a_w.bw = 0
 
         return a_e._raw, a_w._raw, a_n._raw, a_s._raw, a_p._raw, s_u._raw
 
@@ -133,7 +116,6 @@ class IncompressibleFlow():
             'dynamic viscosity [m^2/s]': 1e-6,
             'pressureFieldName': 'p',
             'velocityFieldName': 'U',
-            #'boundaries': {None}
         }
 
     def show(self):

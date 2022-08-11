@@ -3,8 +3,6 @@
 
 import numpy as np
 
-
-
 class mesh(object):
 
     def __init__(self):
@@ -20,7 +18,6 @@ class mesh(object):
             "fc" : ("cb", ""),
             "fd" : ("ca", "")
         }
-
 
 
 class coeffMatrix(object):
@@ -50,3 +47,14 @@ class coeffMatrix(object):
         self.A[3, 4] = -100
         self.A[4, 3] = -100
         self.A[4, 4] = 300
+
+if __name__ == "__main__":
+    T = np.arange(5)
+    coeffMatrixObj = coeffMatrix(dim = len(T))
+    coeffMatrixObj.setCoeffsMatrix()
+    coeffMatrixObj.setCoeffVector(100,500)
+    A = coeffMatrixObj.A
+    b = coeffMatrixObj.b
+    T = np.linalg.solve(A, b)
+    print("book solution")
+    print(T)

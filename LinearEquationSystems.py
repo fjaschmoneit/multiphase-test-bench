@@ -1,6 +1,5 @@
 import numpy as np
 
-
 def createCoefficientMatrix(a_e,a_w,a_n,a_s,a_p, S):
 ### creates coefficient matrix and b vector from concatenated flux vectors
 

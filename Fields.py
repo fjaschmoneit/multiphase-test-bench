@@ -1,10 +1,24 @@
 import PrimitiveFields, LinearEquationSystems
+import numpy as np
 
-
+# a cfd solution method
 def drawCellField(cellField):
     import matplotlib.pyplot as plt
 
-    map = plt.imshow(cellField._raw, cmap='hot', interpolation='nearest')
+    nbcellsX = cellField._mesh._cells_x
+    nbcellsY = cellField._mesh._cells_y
+    lenX = cellField._mesh._lenX
+    lenY = cellField._mesh._lenY
+
+    ax = plt.gca()
+    map = ax.imshow(cellField._raw, cmap='hot', interpolation='nearest')
+
+    ax.set_xticks(np.linspace(-0.5, nbcellsX-0.5, 5))
+    ax.set_xticklabels( np.linspace(0,lenX,5))
+
+    ax.set_yticks(np.linspace(-0.5, nbcellsY-0.5, 5))
+    ax.set_yticklabels( np.linspace(0,lenY,5))
+
     plt.colorbar(map)
     plt.show()
 
@@ -32,8 +46,8 @@ class parameterCellField():
     def __init__(self, mesh, value=0, primitiveField=None):
         self._mesh = mesh
         self._type = 'parameterCellField'
-        self._nx = mesh.cells_x
-        self._ny = mesh.cells_y
+        self._nx = mesh._cells_x
+        self._ny = mesh._cells_y
 
         if primitiveField is not None:
             self._raw = primitiveField
@@ -75,6 +89,14 @@ class parameterCellField():
 
     def __add__(self, other):
         return parameterCellField( mesh=self._mesh, primitiveField=self._raw + other._raw )
+
+    def __mul__(self, other):
+        if isinstance(other, parameterCellField):
+            return parameterCellField(mesh=self._mesh, primitiveField=self._raw * other._raw)
+        elif isinstance(other, type(1.0)):
+            return parameterCellField(mesh=self._mesh, primitiveField=self._raw * other)
+    # def __truediv__(self, other):
+    #     return parameterCellField(mesh=self._mesh, primitiveField=self._raw / other._raw)
 
     def __sub__(self, other):
         return parameterCellField(mesh=self._mesh, primitiveField=self._raw - other._raw)
