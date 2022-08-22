@@ -30,7 +30,7 @@ class Simulation:
         self._coefficientFields = {}
         self._scalarCoefficients = {}
 
-        self.createfields()   # fields should be created in compile()
+        self.createfields()
 
     def createfields(self):
         self.deleteFields()
@@ -44,6 +44,10 @@ class Simulation:
         #
         # for v in self._variableFields:
         #     self._coefficientFields.pop(v, None)
+
+    def initializeFieldData(self, mesh):
+        for field in self._variableFields:
+            field.initialize(mesh)
 
     def deleteFields(self):
         self._variableFields.clear()
@@ -66,7 +70,6 @@ class Simulation:
 
     def compile(self):
         # creating fields and their corresponding matrix equations
-        #self.createfields() are already created. change this
 
         # creates the linear equation systems
         for flowmodel in self._flowmodels:

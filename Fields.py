@@ -27,13 +27,17 @@ def newField(fieldType, mesh, geometry=None):
     if fieldType == 'vectorField':
         if geometry is None:
             return parameterFaceField(mesh)
+#            return parameterFaceField()
         else:
             return variableFaceField(mesh, geometry)
+#            return variableFaceField()
     elif fieldType == 'scalarField':
         if geometry is None:
             return parameterCellField(mesh)
+            #return parameterCellField()
         else:
             return variableCellField(mesh, geometry)
+#            return variableCellField()
 
     elif fieldType == 'scalar':
         return 0.0
@@ -42,10 +46,20 @@ def newField(fieldType, mesh, geometry=None):
 
 
 class parameterCellField():
-    # a parameterCellField does not have a boundary
+    #
+    # def __init__(self):
+    #     self._type = 'parameterCellField'
+    #     self._mesh = None
+    #     self._nx = None
+    #     self._ny = None
+    #     self.raw = None
+    #     self._bw = None
+    #     self._be = None
+    #     self._bn = None
+    #     self._bs = None
+
     def __init__(self, mesh, value=0, primitiveField=None):
         self._mesh = mesh
-        self._type = 'parameterCellField'
         self._nx = mesh._cells_x
         self._ny = mesh._cells_y
 
@@ -114,12 +128,18 @@ class parameterCellField():
 
 class variableCellField(parameterCellField):
 
-    def __init__(self, mesh, geometry, value=0, primitiveField=None):
-        super().__init__(mesh, value, primitiveField)
+    def __init__(self, mesh, geometry, internalValue=None):
+        super().__init__(mesh)
         self._type = 'variableCellField'
         self._boundary = dict.fromkeys(geometry.getBoundaryNames(), None)
         self._A = None
         self._b = None
+        self.internalValue = internalValue
+
+#     def intitialize(self, mesh, value=0, primitiveField=None):
+# #        super().__init__(mesh, value, primitiveField)
+#         super().__init__()
+#         super().initialize(mesh, primitiveField )
 
 
     def setBoundaryCondition(self, boundaryName, boundaryType, kwargs=None):
@@ -132,11 +152,16 @@ class variableCellField(parameterCellField):
 
 class parameterFaceField:
     # access functions to underlying primitive structure
-    def __init__(self, mesh, value=0, primitiveField=None):
+    def __init__(self, mesh, value=0, primitiveFieldX=None, primitiveFieldY=None):
         self._type = 'parameterFaceField'
+        self._mesh = mesh
 
-        self._entries_EW = PrimitiveFields.newFaceField_x( mesh, value )
-        self._entries_NS = PrimitiveFields.newFaceField_y(mesh, value)
+        if(primitiveFieldX is None and primitiveFieldY is None):
+            self._entries_EW = PrimitiveFields.newFaceField_x( self._mesh, value )
+            self._entries_NS = PrimitiveFields.newFaceField_y(self._mesh, value)
+        else:
+            self._entries_EW = primitiveFieldX
+            self._entries_NS = primitiveFieldY
 
         self._internalEntries_EW = self._entries_EW[:,1:-1]
         self._internalEntries_NS = self._entries_NS[1:-1, :]
@@ -151,7 +176,37 @@ class parameterFaceField:
         self._bn = self._entries_NS[:1, :]
         self._bs = self._entries_NS[-1:, :]
 
-#-------- defining all getters and setters:
+    def setInitialValue(self, valueVector):
+        self._entries_EW[:,:] = valueVector[0]
+        self._entries_NS[:,:] = valueVector[1]
+
+#-------- defining algebra
+    def __add__(self, other):
+        primitiveFieldX = self._entries_EW + other._entries_EW
+        primitiveFieldY = self._entries_NS + other._entries_NS
+        return parameterFaceField(mesh=self._mesh, primitiveFieldX=primitiveFieldX, primitiveFieldY=primitiveFieldY )
+
+    def __mul__(self, other):
+        primitiveFieldX = self._entries_EW
+        primitiveFieldY = self._entries_NS
+        if isinstance(other, parameterFaceField):
+            primitiveFieldX *= other._entries_EW
+            primitiveFieldY *= other._entries_NS
+        elif isinstance(other, type(1.0)):
+            primitiveFieldX *= other
+            primitiveFieldY *= other
+        return parameterFaceField(mesh=self._mesh, primitiveFieldX=primitiveFieldX, primitiveFieldY=primitiveFieldY)
+
+    # def __truediv__(self, other):
+    # #     return parameterCellField(mesh=self._mesh, primitiveField=self._raw / other._raw)
+    #
+    # def __sub__(self, other):
+    #     return parameterCellField(mesh=self._mesh, primitiveField=self._raw - other._raw)
+    #
+    # def __neg__(self):
+    #     return parameterCellField(mesh=self._mesh, primitiveField=-self._raw)
+
+    #-------- defining all getters and setters:
 
     @property
     def entries_NS(self):
@@ -250,3 +305,15 @@ class variableFaceField(parameterFaceField):
 
     def setBoundaryCondition(self, boundaryName, boundaryType, kwargs=None):
         self._boundary[boundaryName] = boundaryType
+
+
+if __name__ == '__main__':
+    import Mesh
+
+    mesh = Mesh.cartesian2D(0.5, 0.1, 10)
+    a = parameterFaceField(mesh=mesh, value=2)
+    b = parameterFaceField(mesh=mesh, value=2)
+    c = a+b
+    d = parameterFaceField(mesh=mesh, value=4)
+    # i have to implement an equality operator
+    print( c==d )

@@ -14,7 +14,7 @@ class cartesian2D():
         self._cells_y = int(res*self._lenY)
         self._nbCells = self._cells_x*self._cells_y
 
-        self.invCellDist = None
+        self._invCellDist = None
         self.defineReciprocalDistances()
 
     def defineReciprocalDistances(self):
@@ -27,10 +27,17 @@ class cartesian2D():
         ff.bn = 2 / (self._uniformSpacing)
         ff.bs = 2 / (self._uniformSpacing)
 
-        self.invCellDist = ff
+        self._invCellDist = ff
 
     def getCellVolumes(self):
-        return Fields.parameterCellField(mesh=self, value=self._uniformSpacing**3)
+        return Fields.parameterCellField(mesh=self, value=self._uniformSpacing**2)
+
+    def getInverseCellDistances(self):
+        return self._invCellDist
+
+    def getFaceAreas(self):
+        #return Fields.parameterFaceField(mesh=self, value=self._uniformSpacing**2)
+        return Fields.parameterFaceField(mesh=self, value=1)
 
     def getStats(self):
         print( self._nbCells )
