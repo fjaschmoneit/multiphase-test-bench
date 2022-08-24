@@ -68,17 +68,17 @@ class Simulation:
         print("\n")
 
 
-    def compile(self):
+    def updateLinSystems(self):
         # creating fields and their corresponding matrix equations
 
         # creates the linear equation systems
         for flowmodel in self._flowmodels:
-            flowmodel.createLinearEquationSystems(mesh=self._mesh, fields={**self._variableFields, **self._coefficientFields})
+            flowmodel.updateLinearEquationSystems(mesh=self._mesh, fields={**self._variableFields, **self._coefficientFields})
 
         self._isCompiled = True
 
     def display(self, field):
-        Fields.drawCellField(field)
+        Fields.drawField(field)
 
 
 

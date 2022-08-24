@@ -19,7 +19,6 @@ class cartesian2D():
 
     def defineReciprocalDistances(self):
         ### sets recCellDist as a parameterFaceField with inverse cell distances between internal cells and face-cell distance at boundary
-
         ff = Fields.parameterFaceField(mesh=self, value=1/self._uniformSpacing)
 
         ff.be = 2 / (self._uniformSpacing)

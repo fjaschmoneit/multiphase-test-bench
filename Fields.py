@@ -1,5 +1,25 @@
-import PrimitiveFields, LinearEquationSystems
+import PrimitiveFields, LinearEquationSystems, Interpolation
 import numpy as np
+
+
+def drawField(field):
+    fieldType = type(field)
+    if fieldType == variableCellField or fieldType == parameterCellField:
+        drawCellField(field)
+    elif fieldType == variableFaceField or fieldType == parameterFaceField:
+        drawFaceField(field)
+
+
+def drawFaceField(field):
+    mesh = field._mesh
+
+    u_cell_primitive = Interpolation.getCellInterpolation(field._u, 'x')
+    u_cell = parameterCellField(mesh=mesh, primitiveField=u_cell_primitive)
+    drawCellField(u_cell)
+
+    v_cell_primitive = Interpolation.getCellInterpolation(field._v, 'y')
+    v_cell = parameterCellField(mesh=mesh, primitiveField=v_cell_primitive)
+    drawCellField(v_cell)
 
 # a cfd solution method
 def drawCellField(cellField):
@@ -46,17 +66,6 @@ def newField(fieldType, mesh, geometry=None):
 
 
 class parameterCellField():
-    #
-    # def __init__(self):
-    #     self._type = 'parameterCellField'
-    #     self._mesh = None
-    #     self._nx = None
-    #     self._ny = None
-    #     self.raw = None
-    #     self._bw = None
-    #     self._be = None
-    #     self._bn = None
-    #     self._bs = None
 
     def __init__(self, mesh, value=0, primitiveField=None):
         self._mesh = mesh
@@ -118,7 +127,6 @@ class parameterCellField():
     def __neg__(self):
         return parameterCellField(mesh=self._mesh, primitiveField=-self._raw)
 
-
     def fillWithConsecutiveValues(self):
         PrimitiveFields.fillWithConsecutiveValues(self._raw)
 
@@ -136,12 +144,6 @@ class variableCellField(parameterCellField):
         self._b = None
         self.internalValue = internalValue
 
-#     def intitialize(self, mesh, value=0, primitiveField=None):
-# #        super().__init__(mesh, value, primitiveField)
-#         super().__init__()
-#         super().initialize(mesh, primitiveField )
-
-
     def setBoundaryCondition(self, boundaryName, boundaryType, kwargs=None):
         self._boundary[boundaryName] = boundaryType
 
@@ -157,45 +159,42 @@ class parameterFaceField:
         self._mesh = mesh
 
         if(primitiveFieldX is None and primitiveFieldY is None):
-            self._entries_EW = PrimitiveFields.newFaceField_x( self._mesh, value )
-            self._entries_NS = PrimitiveFields.newFaceField_y(self._mesh, value)
+            self._u = PrimitiveFields.newFaceField_x( self._mesh, value )
+            self._v = PrimitiveFields.newFaceField_y(self._mesh, value)
         else:
-            self._entries_EW = primitiveFieldX
-            self._entries_NS = primitiveFieldY
+            self._u = primitiveFieldX
+            self._v = primitiveFieldY
 
-        self._internalEntries_EW = self._entries_EW[:,1:-1]
-        self._internalEntries_NS = self._entries_NS[1:-1, :]
+        self._u_internal = self._u[:,1:-1]
+        self._v_internal = self._v[1:-1, :]
 
-        self._e = self._entries_EW[:, 1:]
-        self._w = self._entries_EW[:, :-1]
-        self._n = self._entries_NS[:-1,:]
-        self._s = self._entries_NS[1:,:]
+        self._e = self._u[:, 1:]
+        self._w = self._u[:, :-1]
+        self._n = self._v[:-1,:]
+        self._s = self._v[1:,:]
 
-        self._be = self._entries_EW[:, -1:]
-        self._bw = self._entries_EW[:, :1]
-        self._bn = self._entries_NS[:1, :]
-        self._bs = self._entries_NS[-1:, :]
+        self._be = self._u[:, -1:]
+        self._bw = self._u[:, :1]
+        self._bn = self._v[:1, :]
+        self._bs = self._v[-1:, :]
 
-    def setInitialValue(self, valueVector):
-        self._entries_EW[:,:] = valueVector[0]
-        self._entries_NS[:,:] = valueVector[1]
+    def setInternalValue(self, valueVector):
+        self._u[:,:] = valueVector[0]
+        self._v[:,:] = valueVector[1]
 
 #-------- defining algebra
     def __add__(self, other):
-        primitiveFieldX = self._entries_EW + other._entries_EW
-        primitiveFieldY = self._entries_NS + other._entries_NS
+        primitiveFieldX = self._u + other._u
+        primitiveFieldY = self._v + other._v
         return parameterFaceField(mesh=self._mesh, primitiveFieldX=primitiveFieldX, primitiveFieldY=primitiveFieldY )
 
     def __mul__(self, other):
-        primitiveFieldX = self._entries_EW
-        primitiveFieldY = self._entries_NS
         if isinstance(other, parameterFaceField):
-            primitiveFieldX *= other._entries_EW
-            primitiveFieldY *= other._entries_NS
+            return parameterFaceField(mesh=self._mesh, primitiveFieldX=self._u * other._u, primitiveFieldY=self._v * other._v)
         elif isinstance(other, type(1.0)):
-            primitiveFieldX *= other
-            primitiveFieldY *= other
-        return parameterFaceField(mesh=self._mesh, primitiveFieldX=primitiveFieldX, primitiveFieldY=primitiveFieldY)
+            return parameterFaceField(mesh=self._mesh, primitiveFieldX=self._u * other, primitiveFieldY=self._v * other)
+        else:
+            print("multiplication not defined")
 
     # def __truediv__(self, other):
     # #     return parameterCellField(mesh=self._mesh, primitiveField=self._raw / other._raw)
@@ -210,33 +209,33 @@ class parameterFaceField:
 
     @property
     def entries_NS(self):
-        return self._entries_NS
+        return self._v
 
     @entries_NS.setter
     def entries_NS(self, x):
-        self._entries_NS[:, :] = x
+        self._v[:, :] = x
 
     @property
     def entries_EW(self):
-        return self._entries_EW
+        return self._u
 
     @entries_EW.setter
     def entries_EW(self, x):
-        self._entries_EW[:, :] = x
+        self._u[:, :] = x
 
     @property
     def internalEntries_NS(self):
-        return self._internalEntries_NS
+        return self._v_internal
     @internalEntries_NS.setter
     def internalEntries_NS(self, x):
-        self._internalEntries_NS[:, :] = x
+        self._v_internal[:, :] = x
 
     @property
     def internalEntries_EW(self):
-        return self._internalEntries_EW
+        return self._u_internal
     @internalEntries_EW.setter
     def internalEntries_EW(self, x):
-        self._internalEntries_EW[:, :] = x
+        self._u_internal[:, :] = x
 
     @property
     def e(self):

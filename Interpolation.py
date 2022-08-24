@@ -1,6 +1,16 @@
 import Fields
 
 
+#returns a primitive cell field as linear interpolation of faces in primitive facefield
+def getCellInterpolation(primitiveFaceField, direction):
+    f = primitiveFaceField
+    if direction == 'x':
+        return 0.5*( f[:,:-1] + f[:,1:] )
+    elif direction == 'y':
+        return 0.5*( f[:-1,:] + f[1:,:] )
+    else:
+        print("error: no direction chosen")
+
 def centralDifferencing(cellField, mesh):
     # returns the mean value of neighboring cell values as two face fields
     # A_e = 0.5*( A_P + A_E )    for f_e inner face
