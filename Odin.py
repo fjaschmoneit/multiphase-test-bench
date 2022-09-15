@@ -1,3 +1,4 @@
+import LinearEquationSystems
 import Mesh, Fields, FlowModels
 
 class Geometry:
@@ -21,61 +22,30 @@ def createMesh(Geometry, res):
 
 class Simulation:
     def __init__(self, flowmodels, mesh, geometry):
-        self._isCompiled = False
         self._mesh = mesh
-        self._flowmodels = flowmodels.values()
         self._geometry = geometry
+        self._fieldRegistry = {}
 
-        self._variableFields = {}
-        self._coefficientFields = {}
-        self._scalarCoefficients = {}
+        # this dict relates every field to its governing flowmodel
+        self._fieldFlowModelLink = {}
 
-        self.createfields()
+        # should I not just have one? they are approx same size anyway
+        self._scalarLinEqSystem = LinearEquationSystems.linearSystem(self._mesh, type='scalar')
+        self._vectorLinEqSystem = LinearEquationSystems.linearSystem(self._mesh, type='vector_U')
 
-    def createfields(self):
-        self.deleteFields()
-        for flowmodel in self._flowmodels:
-            for var, type in flowmodel._variables.items():
-                self._variableFields[var] = Fields.newField(type, self._mesh, self._geometry)
+        self._flowmodels = [fm(self._mesh, self._geometry, self._fieldRegistry, self._fieldFlowModelLink) for fm in flowmodels]
 
-            for par, type in flowmodel._parameters.items():
-                if par not in flowmodel._variables.keys():
-                    self._coefficientFields[par] = Fields.newField(type, self._mesh)
-        #
-        # for v in self._variableFields:
-        #     self._coefficientFields.pop(v, None)
+    def getFieldRegistry(self):
+        return self._fieldRegistry
 
-    def initializeFieldData(self, mesh):
-        for field in self._variableFields:
-            field.initialize(mesh)
+    def solveField(self, fieldname):
 
-    def deleteFields(self):
-        self._variableFields.clear()
-        self._coefficientFields.clear()
+        flowmodel = self._fieldFlowModelLink[fieldname]
+        flowmodel.updateLinearEquationSystem(self._mesh, self._fieldRegistry, self._scalarLinEqSystem)
 
-    def getFields(self):
-        return {**self._variableFields, **self._coefficientFields}
-
-    def showfields(self):
-        print("variable fields :")
-        [print("\t", key, "\t", field._type, "\t", field._boundary) for key,field in self._variableFields.items()]
-        print("parameter fields :")
-        for key, field in self._coefficientFields.items():
-            try:
-                print("\t", key, "\t", field._type)
-            except:
-                print("\t", key, "\t", "scalar")
-        print("\n")
-
-
-    def updateLinSystems(self):
-        # creating fields and their corresponding matrix equations
-
-        # creates the linear equation systems
-        for flowmodel in self._flowmodels:
-            flowmodel.updateLinearEquationSystems(mesh=self._mesh, fields={**self._variableFields, **self._coefficientFields})
-
-        self._isCompiled = True
+        # flowModel dep
+        self._fieldRegistry[fieldname]._raw[:,:] = self._scalarLinEqSystem.solve()
+        #self._fieldRegistry[fieldname].internalEntriesEW = self._scalarLinEqSystem.solve()
 
     def display(self, field):
         Fields.drawField(field)

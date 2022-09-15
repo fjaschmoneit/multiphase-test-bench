@@ -1,17 +1,9 @@
-import numpy as np
+import LinearEquationSystems
+import Mesh
 
+mesh = Mesh.cartesian2D(1,0.1,10)
+Sys = LinearEquationSystems.linearSystem(mesh)
+Sys.update()
 
-dim = 5
-
-F = np.linspace(0,20,dim)
-
-
-A = np.array([F,F], copy=False)
-
-
-#A[:,0] = F
-print(A)
-
-F+=2
-print(F)
-print(A)
+x = Sys.solve()
+print(x)

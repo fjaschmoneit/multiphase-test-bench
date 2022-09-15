@@ -1,133 +1,131 @@
-import Fields, LinearEquationSystems
-import PrimitiveFields
-import FVM
+import Fields
+import Interpolation
+
 
 class ScalarConvectionDiffusion():
-    def __init__(self, scalarFieldName='s', velocityFieldName='U', diffusionCoefficientName='D', sourceFieldName='R'):
-        self._variables = {
-            scalarFieldName: 'scalarField'
-        }
-        self._parameters = {
-            velocityFieldName: 'vectorField',
-            sourceFieldName : 'scalarField',
-            diffusionCoefficientName: 'scalar'
-        }
-        self._properties = {
-            'diffusionCoefficient': None,
-            'sourceFieldName': sourceFieldName,
-            'scalarFieldName': scalarFieldName,
-            'velocityFieldName': velocityFieldName
-        }
-        self.availableBoundaryConditions = None
+    def __init__(self, mesh, geom, fieldRegistry, fieldFLowModelLink):
 
-    def showContinuumProperties(self):
-        print("ScalarConvectionDiffusion:\n\t", self._properties)
+        self._depScalarName = 'T'
+        self._velocityName = 'U'
+        self._diffCoeffName = 'D'
 
-    def updateLinearEquationSystems(self, mesh, fields):
+        # should become a sparse field
+        self._sourceField = Fields.scalarField(mesh=mesh, value=0)
 
-        # select correct field:
-        depField = fields[self._properties['scalarFieldName']]
-        sourceField = fields[self._properties['sourceFieldName']]
-        velocityField = fields[self._properties['velocityFieldName']]
+        # dependent field
+        if self._depScalarName not in fieldRegistry or not isinstance(fieldRegistry['T'], Fields.varScalarField):
+            fieldRegistry[self._depScalarName] = Fields.varScalarField(mesh, geom)
+        else:
+            print("I don't understand. there seems to already exist a varScalarField 'T' ")
+
+        # link to this flowmodel instance
+        fieldFLowModelLink[self._depScalarName] = self
+
+        # passive fields, need to be linked
+        if self._velocityName not in fieldRegistry:
+            fieldRegistry[self._velocityName] = Fields.vectorField(mesh)
+
+        # coefficients
+        fieldRegistry[self._diffCoeffName] = 0.0
+
+    def updateLinearEquationSystem(self, mesh, objReg, linSys):
+        # defining fluxes F,D and source S in entire mesh
+        # passing to linearEquation System instance
 
         # definings convective flux, vectorField
-        F = velocityField
+        F = objReg[self._velocityName]
 
         # defining diffusive flux, vectorField
         A = mesh.getFaceAreas()
-        D = mesh.getInverseCellDistances() * self._properties['diffusionCoefficient'] * A
+        D = mesh.getInverseCellDistances() * objReg[self._diffCoeffName] * A
 
         # defining source, scalarField
-        S = sourceField * mesh._uniformSpacing
+        S = self._sourceField * mesh._uniformSpacing
 
-        depField._A, depField._b = LinearEquationSystems.createCoefficientMatrix(mesh,F,D,S, depField)
+        linSys.update(mesh, F, D, S, objReg[self._depScalarName])
 
-class IncompressibleFlow():
-    def __init__(self, velocityField='U', pressureField='p', dynViscosity='nu'):
-        self._variables = {
-            velocityField: 'vectorField',
-            pressureField: 'scalarField'
-        }
-        self._parameters = {
-            dynViscosity: 'scalar'
-        }
-        self._properties = {
-            'dynamic viscosity [m^2/s]': 1e-6,
-            'pressureFieldName': 'p',
-            'velocityFieldName': 'U',
-        }
+class IncompressibleFlow:
+    def __init__(self, mesh, geom, fieldRegistry, fieldFLowModelLink):
+    # updates velocity, under provided pressure field
 
-    # creating staggered fields for u,v and
-    def createLinearEquationSystems(self, mesh, fields):
-        # select correct field:
-        velocityField = fields[self._properties['velocityFieldName']]
-        sourceField = fields[self._properties['sourceFieldName']]
-        pressureField = fields[self._properties['velocityFieldName']]
+        self._varVelocityXName = 'u'
+        self._varVelocityYName = 'v'
 
-        fluxes = self.createMatrixCoefficients(
-            mesh=mesh,
-            phi=depField,
-            U=velocityField,
-            diffCoeff=self._properties['diffusionCoefficient'],
-            sourceField=sourceField)
+        self._pressureName = 'p'
+        self._densityName = 'rho'
+        self._kinViscosityName = 'nu'
 
-        depField._A, depField._b = LinearEquationSystems.createCoefficientMatrix(*fluxes)
+        # should become a sparse field
+        self._sourceField = Fields.scalarField(mesh=mesh, value=0)
 
-    def createMatrixCoefficients(self, mesh, phi, diffCoeff, U=None, rho=None, sourceField=None):
-        ### returning coefficient vectors for subsequent coefficient matrix assembly and coeff vector
+        # Defining fields, passing to obj reg:
 
-        #returns either zero, if we have pure diffusion, otherwise a parameterFaceField
-        F = self.createConvectiveFluxes( rho,U  )
-        D = mesh.getInverseCellDistances() * diffCoeff
-        A = mesh.getFaceAreas()
-
-        # directional coefficient matrices are cellFields, very inefficient
-        a_e = -Fields.parameterCellField(mesh=mesh, primitiveField=(D*A).e - 0.5*F.e )
-        a_w = -Fields.parameterCellField(mesh=mesh, primitiveField=(D*A).w + 0.5*F.w )
-        a_n = -Fields.parameterCellField(mesh=mesh, primitiveField=(D*A).n - 0.5*F.n )
-        a_s = -Fields.parameterCellField(mesh=mesh, primitiveField=(D*A).s + 0.5*F.s )
-
-        s_u = sourceField * mesh._uniformSpacing
-
-        a_p = -(a_e + a_w + a_n + a_s)
-
-        # fixing boundary conditions
-        if phi._boundary['top'] == 'zeroGradient':
-            a_p.bn += a_n.bn
-            a_n.bn = 0
+        # dependent fields U
+        if self._varVelocityXName not in fieldRegistry or not isinstance(fieldRegistry[self._varVelocityXName], Fields.varVectorField):
+            fieldRegistry[self._varVelocityXName] = Fields.varVectorField(mesh, geom)   # should be a staggered field, not a vector field
         else:
-            Tn = phi._boundary['top']
-            s_u.bn -= a_n.bn * Tn
-            a_n.bn = 0
+            print("I don't understand. there seems to already exist a varScalarField 'U' ")
 
-        if phi._boundary['bottom'] == 'zeroGradient':
-            a_p.bs += a_s.bs
-            a_s.bs = 0
+        if self._varVelocityYName not in fieldRegistry or not isinstance(fieldRegistry[self._varVelocityYName],
+                                                                        Fields.varVectorField):
+            fieldRegistry[self._varVelocityYName] = Fields.varVectorField(mesh, geom)
         else:
-            Ts = phi._boundary['bottom']
-            s_u.bs -= a_s.bs * Ts
-            a_s.bs = 0
+            print("I don't understand. there seems to already exist a varScalarField 'U' ")
 
-        if phi._boundary['left'] == 'zeroGradient':
-            a_p.bw += a_w.bw
-            a_w.bw = 0
+        # link to this flowmodel instance
+        fieldFLowModelLink[self._varVelocityXName] = self
+        fieldFLowModelLink[self._varVelocityYName] = self
+
+    # passive fields, need to be linked
+        if self._pressureName not in fieldRegistry:
+            fieldRegistry[self._pressureName] = Fields.scalarField(mesh)
+
+        # coefficients
+        fieldRegistry[self._kinViscosityName] = 0.0
+        fieldRegistry[self._densityName] = 1.0
+
+    def calcConvectiveFluxes(self, fieldname, mesh, vel, rho):
+        F = Fields.staggeredFluxField_U(mesh=mesh, value=0)
+
+        if fieldname == self._varVelocityXName:
+            rho_f = Interpolation.cellToVector(rho)
+            F.entries_EW = 0.5*(rho_f.e * vel.e + rho_f.w * vel.w)     # EW entries are a cellfield
+
+            # interpolation of north-south values along EW direction (resulting at vertex interpolation)
+            phi = 0.5*( rho_f.entries_NS[:,1:] * vel.entries_NS[:,1:] + rho_f.entries_NS[:,:-1] * vel.entries_NS[:,:-1])
+            F.entries_NS = phi
         else:
-            Tw = phi._boundary['left']
-            s_u.bw -= a_w.bw * Tw
-            a_w.bw = 0
+            print("???")
 
-        if phi._boundary['right'] == 'zeroGradient':
-            a_p.be += a_e.be
-            a_e.be = 0
-        else:
-            Te = phi._boundary['right']
-            s_u.be -= a_e.be * Te
-            a_e.be = 0
+        return F
 
-        return a_e._raw, a_w._raw, a_n._raw, a_s._raw, a_p._raw, s_u._raw
+    def calcDiffFluxes(self, gamma, mesh):
 
+        gamma_f = Interpolation.cellToVector(gamma)
+        q_f =  mesh.getInverseCellDistances()
+        return gamma_f*q_f
 
-    def show(self):
-        print("IncompressibleFlow:\n\tvariables   {o._variables}\n\tparameters  {o._parameters}\n".format(o=self))
+    def updateLinearEquationSystem(self, mesh, objReg, linSys):
+        # defining fluxes F,D and source S in entire mesh
 
+        u = objReg[self._varVelocityXName]
+        rho = Fields.scalarField(mesh=mesh, value=objReg[self._densityName])  # scalar or scalarField
+        #gamma = Fields.scalarField(mesh=mesh, value=objReg[self._kinViscosityName])  # scalar or scalarField
+        #rho = objReg[self._densityName]
+        # defining convection flux field for u-staggered mesh:
+        F = self.calcConvectiveFluxes(self._varVelocityXName, mesh, u, rho)
+        D=F
 
+#        D = self.calcDiffFluxes(gamma, mesh)
+            # defining diffusive flux, vectorField
+        #A = mesh.getFaceAreas()
+
+            #D = Fields.staggeredFluxField_U(mesh=mesh, value=0)
+        #D = Fields.staggeredFluxField_U(mesh=mesh, value=10)
+    #        D = mesh.getInverseCellDistances() * objReg[self._kinViscosityName] * A
+
+            # I don't expect a velocity source, maybe from bcs
+            # S = self._sourceField * mesh._uniformSpacing
+
+        S = Fields.scalarField(mesh,primitiveField=F.n)
+        linSys.update(mesh, F, D, S, objReg[self._varVelocityXName])

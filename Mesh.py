@@ -14,29 +14,28 @@ class cartesian2D():
         self._cells_y = int(res*self._lenY)
         self._nbCells = self._cells_x*self._cells_y
 
-        self._invCellDist = None
-        self.defineReciprocalDistances()
+        self._invCellDist = self.defineReciprocalDistances()
 
     def defineReciprocalDistances(self):
         ### sets recCellDist as a parameterFaceField with inverse cell distances between internal cells and face-cell distance at boundary
-        ff = Fields.parameterFaceField(mesh=self, value=1/self._uniformSpacing)
+        ff = Fields.vectorField(mesh=self, value=1/self._uniformSpacing)
 
-        ff.be = 2 / (self._uniformSpacing)
-        ff.bw = 2 / (self._uniformSpacing)
-        ff.bn = 2 / (self._uniformSpacing)
-        ff.bs = 2 / (self._uniformSpacing)
+        ff.be *= 2
+        ff.bw *= 2
+        ff.bn *= 2
+        ff.bs *= 2
 
-        self._invCellDist = ff
+        return ff
 
     def getCellVolumes(self):
-        return Fields.parameterCellField(mesh=self, value=self._uniformSpacing**2)
+        return Fields.scalarField(mesh=self, value=self._uniformSpacing**2)
 
     def getInverseCellDistances(self):
         return self._invCellDist
 
     def getFaceAreas(self):
-        #return Fields.parameterFaceField(mesh=self, value=self._uniformSpacing**2)
-        return Fields.parameterFaceField(mesh=self, value=1)
+        #return Fields.vectorField(mesh=self, value=self._uniformSpacing**2)
+        return Fields.vectorField(mesh=self, value=1)
 
     def getStats(self):
         print( self._nbCells )
