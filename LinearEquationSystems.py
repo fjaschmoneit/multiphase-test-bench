@@ -1,8 +1,14 @@
 import numpy as np
+import importlib
 #import scipy.sparse as sparse
 #from scipy.sparse import dia_matrix, bsr_array
 #from scipy.sparse.linalg import spsolve
+
 import Fields
+importlib.reload(Fields)
+
+import ScalarField
+importlib.reload(ScalarField)
 
 class linearSystem:
 
@@ -13,8 +19,6 @@ class linearSystem:
         if type == 'scalar':
             self.nbCV = mesh._nbCells
             self.shape = (mesh._cells_y, mesh._cells_x)
-            # self._nx = mesh._cells_x
-            # self._ny = mesh._cells_y
         if type == 'vector_U':
             self.nbCV = mesh._nbCells-1
             self.shape = (mesh._cells_y, mesh._cells_x-1)
@@ -43,10 +47,10 @@ class linearSystem:
     # here my difference schemes come into play
     # do I still need my fields here or can I just use primitive containers?
     # it is only due to the boundary conditions that I need scalarFields
-        a_e = -Fields.scalarField(mesh=mesh, primitiveField=D.e - 0.5 * F.e)
-        a_w = -Fields.scalarField(mesh=mesh, primitiveField=D.w + 0.5 * F.w)
-        a_n = -Fields.scalarField(mesh=mesh, primitiveField=D.n - 0.5 * F.n)
-        a_s = -Fields.scalarField(mesh=mesh, primitiveField=D.s + 0.5 * F.s)
+        a_e = -ScalarField.scalarField(D.e - 0.5 * F.e)
+        a_w = -ScalarField.scalarField(D.w + 0.5 * F.w)
+        a_n = -ScalarField.scalarField(D.n - 0.5 * F.n)
+        a_s = -ScalarField.scalarField(D.s + 0.5 * F.s)
 
         s_u = S
         a_p = -(a_e + a_w + a_n + a_s)
@@ -86,13 +90,11 @@ class linearSystem:
             a_e.be = 0
 
         # redefinition of my variables. should not be neccessary, when I only use primitive containers here
-        a_e = a_e._raw
-        a_w = a_w._raw
-        a_n = a_n._raw
-        a_s = a_s._raw
-        a_p = a_p._raw
-
-        ny,nx = a_e.shape
+        a_e = a_e.data
+        a_w = a_w.data
+        a_n = a_n.data
+        a_s = a_s.data
+        a_p = a_p.data
 
         a_e_serial = np.reshape(a_e, a_e.size)
         a_w_serial = np.reshape(a_w, a_w.size)
@@ -103,4 +105,5 @@ class linearSystem:
         # why is this reshaped?
         self._b = np.reshape(s_u._raw, s_u._raw.size)
 
+        ny, nx = a_e.shape
         self._A = np.diag(a_p_serial) + np.diag(a_e_serial[:-1], 1) + np.diag(a_w_serial[1:], -1) + np.diag(a_s_serial[:-nx], nx) + np.diag(a_n_serial[nx:], -nx)

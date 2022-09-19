@@ -21,10 +21,10 @@ def newVertexField(mesh, value):
     setInitialValue(vf, value)
     return vf
 
-def newCellField(mesh, value):
-    cf = np.ndarray(shape=(mesh._cells_y, mesh._cells_x), dtype=float, order='C')
-    setInitialValue(cf, value)
-    return cf
+# def newCellField(mesh, value):
+#     cf = np.ndarray(shape=(mesh._cells_y, mesh._cells_x), dtype=float, order='C')
+#     setInitialValue(cf, value)
+#     return cf
 
 # neededs??
 def newFaceField_x(mesh, value):

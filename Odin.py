@@ -1,5 +1,17 @@
+import importlib
+
 import LinearEquationSystems
-import Mesh, Fields, FlowModels
+importlib.reload(LinearEquationSystems)
+
+import Mesh
+importlib.reload(Mesh)
+
+import Fields
+importlib.reload(Fields)
+
+import FlowModels
+importlib.reload(FlowModels)
+
 
 class Geometry:
     def __init__(self, lengthX, lengthY):
@@ -29,6 +41,7 @@ class Simulation:
         # this dict relates every field to its governing flowmodel
         self._fieldFlowModelLink = {}
 
+        # why is the linear equation system defined here?
         # should I not just have one? they are approx same size anyway
         self._scalarLinEqSystem = LinearEquationSystems.linearSystem(self._mesh, type='scalar')
         self._vectorLinEqSystem = LinearEquationSystems.linearSystem(self._mesh, type='vector_U')
@@ -47,8 +60,8 @@ class Simulation:
         self._fieldRegistry[fieldname]._raw[:,:] = self._scalarLinEqSystem.solve()
         #self._fieldRegistry[fieldname].internalEntriesEW = self._scalarLinEqSystem.solve()
 
-    def display(self, field):
-        Fields.drawField(field)
+    def display(self, field, mesh):
+        Fields.drawField(field, mesh)
 
 
 

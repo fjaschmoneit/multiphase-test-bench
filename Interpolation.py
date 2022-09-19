@@ -1,5 +1,9 @@
+import importlib
+
 import Fields
-import PrimitiveFields
+importlib.reload(Fields)
+
+
 
 # def vectorToCell(vectorField, mesh):
 #     sf = Fields.scalarField(mesh)
@@ -47,28 +51,17 @@ def cellToVector(cellField, scheme='centralDifference'):
     # A_e = 0.5*( A_P + A_E )    for f_e inner face
     # A_w = 1.5*A_P - 0.5*A_E    for f_w boundary face
 
-    mesh = cellField._mesh
-    ff = Fields.vectorField(mesh)
-
     if scheme == 'centralDifference':
-        ff.internalEntries_EW = 0.5 * (cellField._raw[:, :-1] + cellField._raw[:, 1:])
-        ff.internalEntries_NS = 0.5 * (cellField._raw[:-1, :] + cellField._raw[1:, :])
-    # differnceField_x = 0.5 * (cellField.internal[:, :-1] + cellField.internal[:, 1:])
-    # differnceField_y = 0.5 * (cellField.internal[:-1, :] + cellField.internal[1:, :])
-    # ff.setInternalValues(differnceField_x, differnceField_y)
+        u = Fields.scalarField(  0.5 * (cellField._raw[:, :-1] + cellField._raw[:, 1:]) )
+        v = Fields.scalarField( 0.5 * (cellField._raw[:-1, :] + cellField._raw[1:, :]) )
+
+        ff = Fields.vectorField(u,v)
 
         ff.bn = 1.5 * cellField._raw[0:1,:] - 0.5 * cellField._raw[1:2,:]
         ff.bs = 1.5 * cellField._raw[-1:,:] - 0.5 * cellField._raw[-2:-1,:]
         ff.be = 1.5 * cellField._raw[:, -1:] - 0.5 * cellField._raw[:, -2:-1]
         ff.bw = 1.5 * cellField._raw[:, 0:1] - 0.5 * cellField._raw[:, 1:2]
-    #
-    # boundaryValues_w = 1.5 * cellField.internal[:, 0:1] - 0.5 * cellField.internal[:, 1:2]
-    # boundaryValues_e = 1.5 * cellField.internal[:, -1:] - 0.5 * cellField.internal[:, -2:-1]
-    #
-    # boundaryValues_n = 1.5 * cellField.internal[0:1,:] - 0.5 * cellField.internal[1:2,:]
-    # boundaryValues_s = 1.5 * cellField.internal[-1:,:] - 0.5 * cellField.internal[-2:-1,:]
-    #
-    # ff.setBoudnaryValues(field_n=boundaryValues_n, field_e=boundaryValues_e, field_w=boundaryValues_w, field_s=boundaryValues_s)
+
     else:
         print("interpolation scheme {scheme} not supported.".format(**locals()))
     return ff
