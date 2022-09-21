@@ -1,14 +1,10 @@
 import numpy as np
-import importlib
+
 #import scipy.sparse as sparse
 #from scipy.sparse import dia_matrix, bsr_array
 #from scipy.sparse.linalg import spsolve
 
-import Fields
-#importlib.reload(Fields)
-
-import ScalarField
-#importlib.reload(ScalarField)
+import Fields    # i keep this include until i have fixed te boundary conditions
 
 class linearSystem:
 
@@ -32,13 +28,15 @@ class linearSystem:
 
 
     def solve(self):
+        check why my matrix looks so funny
+
         x = np.linalg.solve(self._A, self._b)
         return np.reshape(x, self.shape )
 
 
     # remove phi, that's only for fixing BCs, which I will move out of here
     # should not depend on mesh, should not depend on phi
-    def update(self,F,D,S, phi):
+    def update(self,F,D,S, phi, fGov):
     ### updates coefficient matrix and b vector from concatenated flux vectors
         self._A.fill(0.0)
         self._b.fill(0.0)
@@ -47,47 +45,49 @@ class linearSystem:
     # here my difference schemes come into play
     # do I still need my fields here or can I just use primitive containers?
     # it is only due to the boundary conditions that I need scalarFields
-        a_e = -ScalarField.scalarField(D.e - 0.5 * F.e)
-        a_w = -ScalarField.scalarField(D.w + 0.5 * F.w)
-        a_n = -ScalarField.scalarField(D.n - 0.5 * F.n)
-        a_s = -ScalarField.scalarField(D.s + 0.5 * F.s)
 
-        s_u = S
-        a_p = -(a_e + a_w + a_n + a_s)
+        a_e = -fGov.newScalarField(data=D.u.east - 0.5 * F.u.east)
+        a_w = -fGov.newScalarField(data=D.u.west + 0.5 * F.u.west)
+        a_n = -fGov.newScalarField(data=D.v.north - 0.5 * F.v.north)
+        a_s = -fGov.newScalarField(data=D.v.south + 0.5 * F.v.south)
 
-        # can I correct the boundary conditions when defining the input fluxes?
-        # fixing boundary conditions
-        if phi._boundary['top'] == 'zeroGradient':
-            a_p.bn += a_n.bn
-            a_n.bn = 0
-        else:
-            Tn = phi._boundary['top']
-            s_u.bn -= a_n.bn * Tn
-            a_n.bn = 0
+        s_c = S.Sc
+        s_p = S.Sp
+        a_p = -(a_e + a_w + a_n + a_s + s_p)
 
-        if phi._boundary['bottom'] == 'zeroGradient':
-            a_p.bs += a_s.bs
-            a_s.bs = 0
-        else:
-            Ts = phi._boundary['bottom']
-            s_u.bs -= a_s.bs * Ts
-            a_s.bs = 0
-
-        if phi._boundary['left'] == 'zeroGradient':
-            a_p.bw += a_w.bw
-            a_w.bw = 0
-        else:
-            Tw = phi._boundary['left']
-            s_u.bw -= a_w.bw * Tw
-            a_w.bw = 0 #needed??
-
-        if phi._boundary['right'] == 'zeroGradient':
-            a_p.be += a_e.be
-            a_e.be = 0
-        else:
-            Te = phi._boundary['right']
-            s_u.be -= a_e.be * Te
-            a_e.be = 0
+        # # can I correct the boundary conditions when defining the input fluxes?
+        # # fixing boundary conditions
+        # if phi._boundary['top'] == 'zeroGradient':
+        #     a_p.bn += a_n.bn
+        #     a_n.bn = 0
+        # else:
+        #     Tn = phi._boundary['top']
+        #     s_c.bn -= a_n.bn * Tn
+        #     a_n.bn = 0
+        #
+        # if phi._boundary['bottom'] == 'zeroGradient':
+        #     a_p.bs += a_s.bs
+        #     a_s.bs = 0
+        # else:
+        #     Ts = phi._boundary['bottom']
+        #     s_c.bs -= a_s.bs * Ts
+        #     a_s.bs = 0
+        #
+        # if phi._boundary['left'] == 'zeroGradient':
+        #     a_p.bw += a_w.bw
+        #     a_w.bw = 0
+        # else:
+        #     Tw = phi._boundary['left']
+        #     s_c.bw -= a_w.bw * Tw
+        #     a_w.bw = 0 #needed??
+        #
+        # if phi._boundary['right'] == 'zeroGradient':
+        #     a_p.be += a_e.be
+        #     a_e.be = 0
+        # else:
+        #     Te = phi._boundary['right']
+        #     s_c.be -= a_e.be * Te
+        #     a_e.be = 0
 
         # redefinition of my variables. should not be neccessary, when I only use primitive containers here
         a_e = a_e.data
@@ -103,7 +103,7 @@ class linearSystem:
         a_p_serial = np.reshape(a_p, a_p.size)
 
         # why is this reshaped?
-        self._b = np.reshape(s_u._raw, s_u._raw.size)
+        self._b = np.reshape(s_c._raw, s_c._raw.size)
 
         ny, nx = a_e.shape
         self._A = np.diag(a_p_serial) + np.diag(a_e_serial[:-1], 1) + np.diag(a_w_serial[1:], -1) + np.diag(a_s_serial[:-nx], nx) + np.diag(a_n_serial[nx:], -nx)

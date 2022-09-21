@@ -1,8 +1,4 @@
 # mesh class should only hold meta data
-import importlib
-
-import Fields
-#importlib.reload(Fields)
 
 class cartesian2D():
 
@@ -16,41 +12,35 @@ class cartesian2D():
         self._cells_y = int(res*self._lenY)
         self._nbCells = self._cells_x*self._cells_y
 
-        self._invCellDist = None
 
-        #--------------- public variables:
-        self.shapeCVField = (self._cells_y, self._cells_x)
-        self.shapeVarScalarField = (self._cells_y+1, self._cells_x+1)  # including a ghost frame
-        self.shapeStaggered_U = (self._cells_y, self._cells_x+1)
-        self.shapeStaggered_V = (self._cells_y+1, self._cells_x)
-        #self.shapeFaceGrid = (self._cells_y+1, self._cells_x+1)
-
-        #--------------- initializing variables:
-        self.defineReciprocalDistances()
-
-
-    def defineReciprocalDistances(self):
+    def defineReciprocalDistances(self, fieldReg):
         ### sets recCellDist as a parameterFaceField with inverse cell distances between internal cells and face-cell distance at boundary
 
-        ff = Fields.vectorField.fromShapes( self.shapeStaggered_U, self.shapeStaggered_V )
+        fGov = fieldReg['governor']
+
+        ff = fGov.newVectorField(shape_u=fGov.shapeFaces_u, shape_v=fGov.shapeFaces_v)
+        #ff = Fields.vectorField.fromShapes( self.shapeStaggered_U, self.shapeStaggered_V )
         ff.u.data =  1.0/self._uniformSpacing
         ff.v.data =  1.0/self._uniformSpacing
 
-        ff.u.be *= 2
-        ff.u.bw *= 2
-        ff.v.bn *= 2
-        ff.v.bs *= 2
+        # ff.u.be *= 2
+        # ff.u.bw *= 2
+        # ff.v.bn *= 2
+        # ff.v.bs *= 2
 
-        self._invCellDist = ff
+        fieldReg['invCellDist'] = ff
+        # self._invCellDist = ff
 
     # def getCellVolumes(self):
     #     return Fields.scalarField(mesh=self, value=self._uniformSpacing**2)
+    #
+    # def getInverseCellDistances(self):
+    #     return self._invCellDist
 
-    def getInverseCellDistances(self):
-        return self._invCellDist
-
-    def getFaceAreas(self):
-        return Fields.vectorField.fromMesh(self, value=1.0)
+    def calcFaceAreas(self, fieldReg):
+        fGov = fieldReg['governor']
+        return fGov.vectorField(shape_u=fGov.shapeStaggered_U, shape_v=fGov.shapeStaggered_V, value=1e-2)
+        #return Fields.vectorField.fromMesh(self, value=1.0)
 
     def getStats(self):
         print( self._nbCells )

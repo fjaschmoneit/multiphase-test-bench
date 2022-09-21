@@ -1,34 +1,78 @@
-import Fields
 import Interpolation
-import ScalarField
 
 class ScalarConvectionDiffusion():
 
-    def __init__(self, depVariableName, **kwargs):
+    def __init__(self, depVariableName, **fieldnames):
         self._depVariableName = depVariableName
-        self._velocityFieldName = kwargs['velocityFieldName']
-        self._diffusionCoeffName = kwargs['diffusionCoeffName']
+        self._velocityFieldName = fieldnames['velocityFieldName']
+        self._diffusionCoeffName = fieldnames['diffusionCoeffName']
+        self._sourceField = None
+        self._convFluxes = None
+        self._diffFluxes = None
 
-    def calcSourceField(self, mesh, fieldReg):
+    # I should have global instances of these fields
+    def initializeFluxesAndSource(self, fieldReg):
+        fGov = fieldReg['governor']
+        self._sourceField = fGov.sourceField(fGov)
+        self._convFluxes = fGov.newVectorField(shape_u=fGov.shapeFaces_u, shape_v=fGov.shapeFaces_v)  # do I need the boundary flux here at all?
+        self._diffFluxes = fGov.newVectorField(shape_u=fGov.shapeFaces_u, shape_v=fGov.shapeFaces_v)
+
+    def updateSourceField(self, mesh, fieldReg):
         constHeatSource = fieldReg[self._depVariableName]._source
-        sourceField = ScalarField.scalarField.fromShape(mesh.shapeCVField, constHeatSource)
-        volSource = sourceField*mesh._uniformSpacing
-        return volSource
+        self._sourceField.setConstantSource( constHeatSource*mesh._uniformSpacing )
 
     def linkDepFieldToModel(self, fieldFlowModelLink):
         fieldFlowModelLink[self._depVariableName] = self
 
-    def defineFields(self, fieldReg, mesh):
+    def initializeFields(self, fieldReg, mesh):
         # adding neccessary field to registry
         # check if fields are not already defined
-        fieldReg[self._depVariableName] = ScalarField.scalarField.fromShape(mesh.shapeCVField)
-        fieldReg[self._velocityFieldName] = Fields.vectorField.fromShapes(mesh.shapeStaggered_U, mesh.shapeStaggered_V)
+
+        fGov = fieldReg['governor']
+        fieldReg[self._depVariableName] = fGov.newScalarField(shape=fGov.shapeVarScalarField)
+        #fieldReg[self._depVariableName] = fGov.scalarField(shape=fGov.shapeCVField)
+        fieldReg[self._velocityFieldName] = fGov.newVectorField(shape_u=fGov.shapeFaces_u, shape_v=fGov.shapeFaces_v)
         fieldReg[self._diffusionCoeffName] = 0.0
 
-    def calcFluxes(self, fieldReg, mesh):
-        F = fieldReg[self._velocityFieldName]
-        D = mesh.getInverseCellDistances() * fieldReg[self._diffusionCoeffName]
-        return F,D
+    # def updateBoundaryConditions(self, fieldReg):
+    #     # top, bottom zeroFlux, left, right Derichlet
+    #
+    #     phi = fieldReg[self._depVariableName]
+    #
+    #     phi.gw = 100
+    #     phi.ge = 500
+    #     phi.gn = phi.nb
+    #     phi.gs = phi.bs
+
+    def correctBCs(self):
+        D = self._diffFluxes
+        Sc = self._sourceField.Sc
+        Sp = self._sourceField.Sp
+
+        # west
+        Sc.bw += 2* D.u.bw * 100
+        Sp.bw += D.u.bw
+        D.u.bw =0
+
+        # east
+        Sc.be += 2*D.u.be * 500
+        Sp.be += D.u.be
+        D.u.be = 0
+
+        # north
+        Sp.bn += D.v.bn
+        D.v.nb = 0
+
+        # south
+        Sp.bs += D.v.bs
+        D.v.ns = 0
+
+    def updateFluxes(self, fieldReg):
+        self._convFluxes = fieldReg[self._velocityFieldName]
+        print(fieldReg['invCellDist'].u.data)
+        print(fieldReg['invCellDist'].v.data)
+
+        self._diffFluxes = fieldReg['invCellDist'] * fieldReg[self._diffusionCoeffName]
 
 class IncompressibleMomentumComp():
 

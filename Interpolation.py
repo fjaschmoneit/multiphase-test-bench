@@ -1,23 +1,11 @@
-import importlib
-
-import Fields
-import ScalarField
-#importlib.reload(Fields)
+from Fields import fieldGovernor
+#import ScalarField
 
 
-
-# def vectorToCell(vectorField, mesh):
-#     sf = Fields.scalarField(mesh)
-#     sf._raw[:,:] = vectorField.entries_EW[:,:-1] + vectorField.entries_EW[:,1:]
-#     sf._raw[:,:] += vectorField.entries_NS[:-1,:] + vectorField.entries_NS[1:,:]
-#     sf._raw[:,:] /= 4.0
-#     return sf
-# #    return Fields.scalarField(mesh, 10)
 
 def scalarToFaces_EW(scalarField):
     # returns a primitive field
     return 0.5*(scalarField._raw[:,1:] + scalarField._raw[:,:-1])
-
 
 #returns a primitive cell field as linear interpolation of faces in primitive facefield
 def getCellInterpolation(primitiveFaceField, direction):
@@ -28,24 +16,6 @@ def getCellInterpolation(primitiveFaceField, direction):
         return 0.5*( f[:-1,:] + f[1:,:] )
     else:
         print("error: no direction chosen")
-
-def cellToVertex(cellField, scheme='centralDifference'):
-
-    mesh = cellField._mesh
-    vf = Fields.vertexField(mesh)
-
-    if scheme == 'centralDifference':
-
-        ff = cellToVector(cellField)
-
-        vf._raw[:-1,:] = ff.entries_EW
-        vf._raw[1:,:] += ff.entries_EW
-        vf._raw[:,1:] += ff.entries_NS
-        vf._raw[:,:-1] += ff.entries_NS
-
-    else:
-        print("interpolation scheme {scheme} not supported.".format(**locals()))
-    return vf
 
 def cellToVector(cellField, mesh, scheme='centralDifference'):
     # returns the mean value of neighboring cell values as two face fields
@@ -75,3 +45,32 @@ def cellToVector(cellField, mesh, scheme='centralDifference'):
     else:
         print("interpolation scheme {scheme} not supported.".format(**locals()))
     return ff
+
+
+# def vectorToCell(vectorField, mesh):
+#     sf = Fields.scalarField(mesh)
+#     sf._raw[:,:] = vectorField.entries_EW[:,:-1] + vectorField.entries_EW[:,1:]
+#     sf._raw[:,:] += vectorField.entries_NS[:-1,:] + vectorField.entries_NS[1:,:]
+#     sf._raw[:,:] /= 4.0
+#     return sf
+# #    return Fields.scalarField(mesh, 10)
+
+
+#
+# def cellToVertex(cellField, scheme='centralDifference'):
+#
+#     mesh = cellField._mesh
+#     vf = Fields.vertexField(mesh)
+#
+#     if scheme == 'centralDifference':
+#
+#         ff = cellToVector(cellField)
+#
+#         vf._raw[:-1,:] = ff.entries_EW
+#         vf._raw[1:,:] += ff.entries_EW
+#         vf._raw[:,1:] += ff.entries_NS
+#         vf._raw[:,:-1] += ff.entries_NS
+#
+#     else:
+#         print("interpolation scheme {scheme} not supported.".format(**locals()))
+#     return vf

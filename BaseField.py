@@ -1,56 +1,53 @@
 import numpy as np
 
-class scalarField:
+class baseField:
 
     def __init__(self, data):
 
         self._raw = data
         self.shape = self._raw.shape
         self._boundary = {}
-        self._source = None     # not good, i.e. a field has an instance of another field
 
         self._internalValues_U = self._raw[:,1:-1]
         self._internalValues_V = self._raw[1:-1,:]
 
         # directional values:
-        self._e = self._raw[:, 1:]
-        self._w = self._raw[:, :-1]
-        self._n = self._raw[:-1, :]
-        self._s = self._raw[1:, :]
+        self._east = self._raw[:, 1:]
+        self._west = self._raw[:, :-1]
+        self._north = self._raw[:-1, :]
+        self._south = self._raw[1:, :]
 
-        # boundary values:
+        # ghost values:
         self._bw = self._raw[:, :1]
         self._be = self._raw[:, -1:]
         self._bn = self._raw[:1, :]
         self._bs = self._raw[-1:, :]
-    #
-    # class scalarField(BaseField.baseField):
-    #
-    #     def __init__(self, data):
-    #         super().__init__(data)
 
-    # @classmethod
-    # def fromShape(cls, shape, value=0.0):
-    #     return cls(newField(shape, value))
+        # # boundary values:
+        # self._bw = self._raw[:, 1:2]
+        # self._be = self._raw[:, -2:-1]
+        # self._bn = self._raw[1:2, :]
+        # self._bs = self._raw[-2:-1, :]
+
 
     def __add__(self, other):
-        return scalarField(self.data + other.data)
+        return baseField(self.data + other.data)
 
     def __mul__(self, other):
-        if isinstance(other, scalarField):
-            return scalarField(self.data * other.data)
+        if isinstance(other, baseField):
+            return baseField(self.data * other.data)
         elif isinstance(other, type(1.0)):
-            return scalarField(self.data * other)
+            return baseField(self.data * other)
 
     def __sub__(self, other):
-        return scalarField(self.data - other.data)
+        return baseField(self.data - other.data)
 
     def __neg__(self):
-        return scalarField(-self.data)
+        return baseField(-self.data)
 
     #------------------ constructors
     @classmethod
-    def fromShape(cls, shape, value=0):
+    def fromShape(cls, shape, value=0.0):
         return cls( cls.newField(shape, value) )
 
     @classmethod
@@ -116,29 +113,29 @@ class scalarField:
         self._bs[:, :] = x
 
     @property
-    def e(self):
-        return self._e
-    @e.setter
-    def e(self, x):
-        self._e[:,:] = x
+    def east(self):
+        return self._east
+    @east.setter
+    def east(self, x):
+        self._east[:,:] = x
 
     @property
-    def w(self):
-        return self._w
-    @w.setter
-    def w(self, x):
-        self._w[:,:] = x
+    def west(self):
+        return self._west
+    @west.setter
+    def west(self, x):
+        self._west[:,:] = x
 
     @property
-    def n(self):
-        return self._n
-    @n.setter
-    def n(self, x):
-        self._n[:,:] = x
+    def north(self):
+        return self._north
+    @north.setter
+    def north(self, x):
+        self._north[:,:] = x
 
     @property
-    def s(self):
-        return self._s
-    @s.setter
-    def s(self, x):
-        self._s[:,:] = x
+    def south(self):
+        return self._south
+    @south.setter
+    def south(self, x):
+        self._south[:,:] = x
