@@ -1,16 +1,16 @@
-import importlib
+#import importlib
 
 import LinearEquationSystems
-importlib.reload(LinearEquationSystems)
+#importlib.reload(LinearEquationSystems)
 
 import Mesh
-importlib.reload(Mesh)
+#importlib.reload(Mesh)
 
 import Fields
-importlib.reload(Fields)
+#importlib.reload(Fields)
 
 import FlowModels
-importlib.reload(FlowModels)
+#importlib.reload(FlowModels)
 
 
 class Geometry:
@@ -43,25 +43,39 @@ class Simulation:
 
         # why is the linear equation system defined here?
         # should I not just have one? they are approx same size anyway
-        self._scalarLinEqSystem = LinearEquationSystems.linearSystem(self._mesh, type='scalar')
-        self._vectorLinEqSystem = LinearEquationSystems.linearSystem(self._mesh, type='vector_U')
+        self._eqSystem = LinearEquationSystems.linearSystem(self._mesh)
+        #self._vectorLinEqSystem = LinearEquationSystems.linearSystem(self._mesh, type='vector_U')
 
-        self._flowmodels = [fm(self._mesh, self._geometry, self._fieldRegistry, self._fieldFlowModelLink) for fm in flowmodels]
+        #self._flowmodels = [fm(self._mesh, self._geometry, self._fieldRegistry, self._fieldFlowModelLink) for fm in flowmodels]
+        for fm in flowmodels:
+            fm.defineFields(self._fieldRegistry, self._mesh)
+            fm.linkDepFieldToModel(self._fieldFlowModelLink)
+
+    def solve(self, fieldname):
+
+        field = self._fieldRegistry[fieldname]
+        flowmodel = self._fieldFlowModelLink[fieldname]
+
+        self.update( flowmodel, field )
+        #flowmodel.updateLinearEquationSystem(self._mesh, self._fieldRegistry, self._scalarLinEqSystem)
+
+        field.data = self._eqSystem.solve()
+        #self._fieldRegistry[fieldname].internalEntriesEW = self._scalarLinEqSystem.solve()
+
+
+    def update(self, flowmodel, field):
+        F,D = flowmodel.calcFluxes(self._fieldRegistry, self._mesh)
+        S = flowmodel.calcSourceField(self._mesh, self._fieldRegistry)
+        self._eqSystem.update( F,D,S,field )  # field is only passed because I don't treat the BCs in fluxes
+
+
+
+#--------- could also be external functions:
 
     def getFieldRegistry(self):
         return self._fieldRegistry
 
-    def solveField(self, fieldname):
-
-        flowmodel = self._fieldFlowModelLink[fieldname]
-        flowmodel.updateLinearEquationSystem(self._mesh, self._fieldRegistry, self._scalarLinEqSystem)
-
-        # flowModel dep
-        self._fieldRegistry[fieldname]._raw[:,:] = self._scalarLinEqSystem.solve()
-        #self._fieldRegistry[fieldname].internalEntriesEW = self._scalarLinEqSystem.solve()
 
     def display(self, field, mesh):
         Fields.drawField(field, mesh)
-
-
 

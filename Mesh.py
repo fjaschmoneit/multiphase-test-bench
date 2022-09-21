@@ -1,9 +1,8 @@
 # mesh class should only hold meta data
 import importlib
 
-
 import Fields
-importlib.reload(Fields)
+#importlib.reload(Fields)
 
 class cartesian2D():
 
@@ -20,7 +19,7 @@ class cartesian2D():
         self._invCellDist = None
 
         #--------------- public variables:
-        self.shapeSimpleScalarField = (self._cells_y, self._cells_x)
+        self.shapeCVField = (self._cells_y, self._cells_x)
         self.shapeVarScalarField = (self._cells_y+1, self._cells_x+1)  # including a ghost frame
         self.shapeStaggered_U = (self._cells_y, self._cells_x+1)
         self.shapeStaggered_V = (self._cells_y+1, self._cells_x)
@@ -33,14 +32,14 @@ class cartesian2D():
     def defineReciprocalDistances(self):
         ### sets recCellDist as a parameterFaceField with inverse cell distances between internal cells and face-cell distance at boundary
 
-        ff = Fields.vectorField.fromMesh( self )
+        ff = Fields.vectorField.fromShapes( self.shapeStaggered_U, self.shapeStaggered_V )
         ff.u.data =  1.0/self._uniformSpacing
         ff.v.data =  1.0/self._uniformSpacing
 
-        ff.be *= 2
-        ff.bw *= 2
-        ff.bn *= 2
-        ff.bs *= 2
+        ff.u.be *= 2
+        ff.u.bw *= 2
+        ff.v.bn *= 2
+        ff.v.bs *= 2
 
         self._invCellDist = ff
 

@@ -5,9 +5,14 @@ class scalarField:
     def __init__(self, data):
 
         self._raw = data
-        self._shape = self._raw.shape
+        self.shape = self._raw.shape
+        self._boundary = {}
+        self._source = None     # not good, i.e. a field has an instance of another field
 
-        # internal values:
+        self._internalValues_U = self._raw[:,1:-1]
+        self._internalValues_V = self._raw[1:-1,:]
+
+        # directional values:
         self._e = self._raw[:, 1:]
         self._w = self._raw[:, :-1]
         self._n = self._raw[:-1, :]
@@ -58,6 +63,12 @@ class scalarField:
         field = np.ndarray(shape=shape, dtype=float, order='C')
         field.fill(value)
         return field
+
+    def setConstSource(self, value):
+        self._source = value
+
+    def setBoundaryCondition(self, boundaryName, boundaryType):
+        self._boundary[boundaryName] = boundaryType
     #
     # def fillWithConst(self, const):
     #     self._raw[:,:] = const

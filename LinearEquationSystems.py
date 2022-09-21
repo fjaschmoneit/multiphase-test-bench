@@ -5,27 +5,27 @@ import importlib
 #from scipy.sparse.linalg import spsolve
 
 import Fields
-importlib.reload(Fields)
+#importlib.reload(Fields)
 
 import ScalarField
-importlib.reload(ScalarField)
+#importlib.reload(ScalarField)
 
 class linearSystem:
 
     # constructor for cell linear system
     # consider to make constructor singleton
-    def __init__(self, mesh, type):
-
-        if type == 'scalar':
-            self.nbCV = mesh._nbCells
-            self.shape = (mesh._cells_y, mesh._cells_x)
-        if type == 'vector_U':
-            self.nbCV = mesh._nbCells-1
-            self.shape = (mesh._cells_y, mesh._cells_x-1)
+    def __init__(self, mesh):
 
         # use scipy sprse amtrix classes here
         # self._A = dia_matrix( (nbCells, nbCells) ).toarray()
         # self._b = bsr_array( (nbCells)).toarray()
+
+
+        # these dimensions correspond to a scalar control volume porblem.
+        # staggered mesh problems are smaller, since only internal faces are solved for
+        # in this case, the lin equation system is filled with zeros, but it doesn't change size
+        self.nbCV = mesh._nbCells
+        self.shape = (mesh._cells_y, mesh._cells_x)
 
         self._A = np.zeros(self.shape)
         self._b = np.zeros((self.nbCV,))
@@ -38,7 +38,7 @@ class linearSystem:
 
     # remove phi, that's only for fixing BCs, which I will move out of here
     # should not depend on mesh, should not depend on phi
-    def update(self,mesh,F,D,S, phi):
+    def update(self,F,D,S, phi):
     ### updates coefficient matrix and b vector from concatenated flux vectors
         self._A.fill(0.0)
         self._b.fill(0.0)

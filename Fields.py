@@ -1,40 +1,42 @@
-import importlib
 import numpy as np
-
 import ScalarField
-importlib.reload(ScalarField)
 
-
-class hectorField:
+class vectorField:
     # access functions to underlying primitive structure
 #    def __init__(self, mesh, value=0, primitiveFieldX=None, primitiveFieldY=None):
     def __init__(self, u, v):
-        print("moin")
 
         # these are scalar fields:
         self._u = u
         self._v = v
 
-        # these are ndarrays
-        self._e = self._u.e
-        self._w = self._u.w
-        self._n = self._v.n
-        self._s = self._v.s
+        # # these are ndarrays
+        # self._e = self._u.e
+        # self._w = self._u.w
+        # self._n = self._v.n
+        # self._s = self._v.s
+        #
+        # self._be = self._u.be
+        # self._bw = self._u.bw
+        # self._bn = self._v.bn
+        # self._bs = self._v.bs
 
-        self._be = self._u.be
-        self._bw = self._u.bw
-        self._bn = self._v.bn
-        self._bs = self._v.bs
+
+    # @classmethod
+    # def fromMesh(cls, mesh, value=0.0):
+    #     return cls( *cls.UVfromMesh( mesh, value) )
 
     @classmethod
-    def fromMesh(cls, mesh, value=0.0):
-        return cls( *cls.UVfromMesh( mesh, value) )
+    def fromShapes(cls, shape_u, shape_v, value=0.0):
+        u = ScalarField.scalarField.fromShape(shape_u, value)
+        v = ScalarField.scalarField.fromShape(shape_v, value)
+        return cls(u, v)
 
-    @staticmethod
-    def UVfromMesh(mesh, value = 0):
-        u = ScalarField.scalarField.fromShape(mesh.shapeStaggered_U, value)
-        v = ScalarField.scalarField.fromShape(mesh.shapeStaggered_V, value)
-        return (u, v)
+    # @staticmethod
+    # def UVfromMesh(mesh, value = 0.0):
+    #     u = ScalarField.scalarField.fromShape(mesh.shapeStaggered_U, value)
+    #     v = ScalarField.scalarField.fromShape(mesh.shapeStaggered_V, value)
+    #     return (u, v)
 
 
 #-------- defining algebra
@@ -66,20 +68,6 @@ class hectorField:
     def v(self, x):
         self._v.data[:, :] = x
 
-    # @property
-    # def internalEntries_NS(self):
-    #     return self._v_internal
-    # @internalEntries_NS.setter
-    # def internalEntries_NS(self, x):
-    #     self._v_internal[:, :] = x
-    #
-    # @property
-    # def internalEntries_EW(self):
-    #     return self._u_internal
-    # @internalEntries_EW.setter
-    # def internalEntries_EW(self, x):
-    #     self._u_internal[:, :] = x
-    #
     @property
     def e(self):
         return self._e
@@ -137,131 +125,122 @@ class hectorField:
         self._bs = x
 
 
-
-
-
-
-
-
-
-
-
-class staggeredFluxField_U:
-
-    def __init__(self, mesh, value=0):
-        self._mesh = mesh
-
-        self._u = np.ndarray(shape=(mesh._cells_y, mesh._cells_x), dtype=float, order='C')
-        self._v = np.ndarray(shape=(mesh._cells_y+1, mesh._cells_x-1), dtype=float, order='C')
-
-        self._u_internal = self._u[:, 1:-1]
-        self._v_internal = self._v[1:-1, :]
-
-        self._e = self._u[:, 1:]
-        self._w = self._u[:, :-1]
-        self._n = self._v[:-1, :]
-        self._s = self._v[1:, :]
-
-        self._be = self._u[:, -1:]
-        self._bw = self._u[:, :1]
-        self._bn = self._v[:1, :]
-        self._bs = self._v[-1:, :]
-
-    @property
-    def entries_NS(self):
-        return self._v
-
-    @entries_NS.setter
-    def entries_NS(self, x):
-        self._v[:, :] = x
-
-    @property
-    def entries_EW(self):
-        return self._u
-
-    @entries_EW.setter
-    def entries_EW(self, x):
-        self._u[:, :] = x
-
-    @property
-    def internalEntries_NS(self):
-        return self._v_internal
-
-    @internalEntries_NS.setter
-    def internalEntries_NS(self, x):
-        self._v_internal[:, :] = x
-
-    @property
-    def internalEntries_EW(self):
-        return self._u_internal
-
-    @internalEntries_EW.setter
-    def internalEntries_EW(self, x):
-        self._u_internal[:, :] = x
-
-    @property
-    def e(self):
-        return self._e
-
-    @e.setter
-    def e(self, x):
-        self._e[:, :] = x
-
-    @property
-    def w(self):
-        return self._w
-
-    @w.setter
-    def w(self, x):
-        self._w[:, :] = x
-
-    @property
-    def n(self):
-        return self._n
-
-    @n.setter
-    def n(self, x):
-        self._n[:, :] = x
-
-    @property
-    def s(self):
-        return self._s
-
-    @s.setter
-    def s(self, x):
-        self._s[:, :] = x
-
-    @property
-    def be(self):
-        return self._be
-
-    @be.setter
-    def be(self, x):
-        self._be[:, :] = x
-
-    @property
-    def bw(self):
-        return self._bw
-
-    @bw.setter
-    def bw(self, x):
-        self._bw[:, :] = x
-
-    @property
-    def bn(self):
-        return self._bn
-
-    @bn.setter
-    def bn(self, x):
-        self._bn[:, :] = x
-
-    @property
-    def bs(self):
-        return self._bs
-
-    @bs.setter
-    def bs(self, x):
-        self._bs[:, :] = x
+# class staggeredFluxField_U:
+#
+#     def __init__(self, mesh, value=0):
+#         self._mesh = mesh
+#
+#         self._u = np.ndarray(shape=(mesh._cells_y, mesh._cells_x), dtype=float, order='C')
+#         self._v = np.ndarray(shape=(mesh._cells_y+1, mesh._cells_x-1), dtype=float, order='C')
+#
+#         self._u_internal = self._u[:, 1:-1]
+#         self._v_internal = self._v[1:-1, :]
+#
+#         self._e = self._u[:, 1:]
+#         self._w = self._u[:, :-1]
+#         self._n = self._v[:-1, :]
+#         self._s = self._v[1:, :]
+#
+#         self._be = self._u[:, -1:]
+#         self._bw = self._u[:, :1]
+#         self._bn = self._v[:1, :]
+#         self._bs = self._v[-1:, :]
+#
+#     @property
+#     def entries_NS(self):
+#         return self._v
+#
+#     @entries_NS.setter
+#     def entries_NS(self, x):
+#         self._v[:, :] = x
+#
+#     @property
+#     def entries_EW(self):
+#         return self._u
+#
+#     @entries_EW.setter
+#     def entries_EW(self, x):
+#         self._u[:, :] = x
+#
+#     @property
+#     def internalEntries_NS(self):
+#         return self._v_internal
+#
+#     @internalEntries_NS.setter
+#     def internalEntries_NS(self, x):
+#         self._v_internal[:, :] = x
+#
+#     @property
+#     def internalEntries_EW(self):
+#         return self._u_internal
+#
+#     @internalEntries_EW.setter
+#     def internalEntries_EW(self, x):
+#         self._u_internal[:, :] = x
+#
+#     @property
+#     def e(self):
+#         return self._e
+#
+#     @e.setter
+#     def e(self, x):
+#         self._e[:, :] = x
+#
+#     @property
+#     def w(self):
+#         return self._w
+#
+#     @w.setter
+#     def w(self, x):
+#         self._w[:, :] = x
+#
+#     @property
+#     def n(self):
+#         return self._n
+#
+#     @n.setter
+#     def n(self, x):
+#         self._n[:, :] = x
+#
+#     @property
+#     def s(self):
+#         return self._s
+#
+#     @s.setter
+#     def s(self, x):
+#         self._s[:, :] = x
+#
+#     @property
+#     def be(self):
+#         return self._be
+#
+#     @be.setter
+#     def be(self, x):
+#         self._be[:, :] = x
+#
+#     @property
+#     def bw(self):
+#         return self._bw
+#
+#     @bw.setter
+#     def bw(self, x):
+#         self._bw[:, :] = x
+#
+#     @property
+#     def bn(self):
+#         return self._bn
+#
+#     @bn.setter
+#     def bn(self, x):
+#         self._bn[:, :] = x
+#
+#     @property
+#     def bs(self):
+#         return self._bs
+#
+#     @bs.setter
+#     def bs(self, x):
+#         self._bs[:, :] = x
 
 #
 # class scalarField(BaseField.baseField):
@@ -289,39 +268,39 @@ class staggeredFluxField_U:
 #         return scalarField(-self.data)
 
 # merge with scalarField?
-class varScalarField(ScalarField.scalarField):
-
-    def __init__(self, mesh, geometry, internalValue=None):
-        super().__init__( super().newField( mesh.shapeSimpleScalarField ) )
-        self._boundary = dict.fromkeys(geometry.getBoundaryNames(), None)
-
-    def setBoundaryCondition(self, boundaryName, boundaryType):
-        self._boundary[boundaryName] = boundaryType
-
-class vertexField:
-
-    def __init__(self, mesh, value=0):
-        self._mesh = mesh
-        self._raw = PrimitiveFields.newVertexField(self._mesh, value)
-
-        self._e = self._raw[:, 1:]
-        self._w = self._raw[:, :-1]
-        self._n = self._raw[:-1, :]
-        self._s = self._raw[1:, :]
-
-    @property
-    def e(self):
-        return self._e
-    @property
-    def w(self):
-        return self._w
-    @property
-    def n(self):
-        return self._n
-    @property
-    def s(self):
-        return self._s
-
+# class varScalarField(ScalarField.scalarField):
+#
+#     def __init__(self, mesh, geometry, internalValue=None):
+#         super().__init__( super().newField( mesh.shapeSimpleScalarField ) )
+#         self._boundary = dict.fromkeys(geometry.getBoundaryNames(), None)
+#
+#     def setBoundaryCondition(self, boundaryName, boundaryType):
+#         self._boundary[boundaryName] = boundaryType
+#
+# class vertexField:
+#
+#     def __init__(self, mesh, value=0):
+#         self._mesh = mesh
+#         self._raw = PrimitiveFields.newVertexField(self._mesh, value)
+#
+#         self._e = self._raw[:, 1:]
+#         self._w = self._raw[:, :-1]
+#         self._n = self._raw[:-1, :]
+#         self._s = self._raw[1:, :]
+#
+#     @property
+#     def e(self):
+#         return self._e
+#     @property
+#     def w(self):
+#         return self._w
+#     @property
+#     def n(self):
+#         return self._n
+#     @property
+#     def s(self):
+#         return self._s
+#
 
 
 
@@ -340,12 +319,14 @@ class varVectorField(vectorField):
 
 
 
+
 def drawField(field, mesh):
-    fieldType = type(field)
-    if fieldType == varScalarField or fieldType == ScalarField.scalarField:
-        drawCellField(field, mesh)
-    elif fieldType == varVectorField or fieldType == vectorField:
-        drawFaceField(field, mesh)
+    #fieldType = type(field)
+    drawCellField(field,mesh)
+    # if fieldType == varScalarField or fieldType == ScalarField.scalarField:
+    #     drawCellField(field, mesh)
+    # elif fieldType == varVectorField or fieldType == vectorField:
+    #     drawFaceField(field, mesh)
 
 #
 # def drawFaceField(field, mesh):
