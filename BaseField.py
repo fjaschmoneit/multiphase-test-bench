@@ -56,25 +56,18 @@ class baseField:
 
     #----------------- static methods
     @staticmethod
-    def newField(shape, value=0):
+    def newField(shape, value=0.0):
         field = np.ndarray(shape=shape, dtype=float, order='C')
         field.fill(value)
         return field
 
+    # Should be done by flowmodel
     def setConstSource(self, value):
         self._source = value
 
+    # Should be done by flowmodel
     def setBoundaryCondition(self, boundaryName, boundaryType):
         self._boundary[boundaryName] = boundaryType
-    #
-    # def fillWithConst(self, const):
-    #     self._raw[:,:] = const
-    #
-    # def fillWithConsecutiveValues(self):
-    #     PrimitiveFields.fillWithConsecutiveValues(self._raw)
-    #
-    # def fillWithRandomIntegers(self):
-    #     PrimitiveFields.fillWithRandomIntegers(self._raw)
 
     @property
     def data(self):

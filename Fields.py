@@ -39,8 +39,6 @@ class fieldGovernor:
             u = BaseField.baseField.fromShape(shape=kwargs['shape_u'], value=value)
             v = BaseField.baseField.fromShape(shape=kwargs['shape_v'], value=value)
 
-            # u = cls.newScalarField(shape=kwargs['shape_u'], value=value)
-            # v = cls.newScalarField(shape=kwargs['shape_v'], value=value)
             return vectorField(u,v)
         else:
             print("error: incorrect constructor arguments supplied.")
@@ -65,7 +63,7 @@ class fieldGovernor:
         lenY = mesh._lenY
 
         ax = plt.gca()
-        map = ax.imshow(cellField._raw, cmap='hot', interpolation='nearest')
+        map = ax.imshow(cellField.internal, cmap='hot', interpolation='nearest')
 
         ax.set_xticks(np.linspace(-0.5, nbcellsX - 0.5, 5))
         ax.set_xticklabels(np.linspace(0, lenX, 5))
@@ -91,7 +89,7 @@ class scalarField(BaseField.baseField):
 
         super().__init__(data)
 
-        self.internal = self._raw[1:-1,1:-1]
+        self._internal = self._raw[1:-1,1:-1]
 
         # ghost values:
         self._gw = self._raw[:, :1]
@@ -109,6 +107,13 @@ class scalarField(BaseField.baseField):
     def fromShape(cls, shape, value=0.0):
         data = BaseField.baseField.newField(shape, value)
         return cls( data )
+
+    @property
+    def internal(self):
+        return self._internal
+    @internal.setter
+    def internal(self, x):
+        self._internal[:, :] = x
 
     @property
     def ge(self):
@@ -178,35 +183,6 @@ class vectorField:
     @v.setter
     def v(self, x):
         self._v.data[:, :] = x
-    #
-    # @property
-    # def be(self):
-    #     return self._be
-    # @be.setter
-    # def be(self, x):
-    #     self._be = x
-    #
-    # @property
-    # def bw(self):
-    #     return self._bw
-    # @bw.setter
-    # def bw(self, x):
-    #     self._bw = x
-    #
-    # @property
-    # def bn(self):
-    #     return self._bn
-    # @bn.setter
-    # def bn(self, x):
-    #     self._bn = x
-    #
-    # @property
-    # def bs(self):
-    #     return self._bs
-    # @bs.setter
-    # def bs(self, x):
-    #     self._bs = x
-
 
 # merge with vector field
 class varVectorField(vectorField):

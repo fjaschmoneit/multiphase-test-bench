@@ -3,6 +3,7 @@ import Interpolation
 class ScalarConvectionDiffusion():
 
     def __init__(self, depVariableName, **fieldnames):
+        self._mesh = None
         self._depVariableName = depVariableName
         self._velocityFieldName = fieldnames['velocityFieldName']
         self._diffusionCoeffName = fieldnames['diffusionCoeffName']
@@ -11,68 +12,101 @@ class ScalarConvectionDiffusion():
         self._diffFluxes = None
 
     # I should have global instances of these fields
-    def initializeFluxesAndSource(self, fieldReg):
+    def initialize(self, mesh, fieldReg, fieldFlowModelLink):
+        self._mesh = mesh
         fGov = fieldReg['governor']
         self._sourceField = fGov.sourceField(fGov)
-        self._convFluxes = fGov.newVectorField(shape_u=fGov.shapeFaces_u, shape_v=fGov.shapeFaces_v)  # do I need the boundary flux here at all?
+        self._convFluxes = fGov.newVectorField(shape_u=fGov.shapeFaces_u, shape_v=fGov.shapeFaces_v)
         self._diffFluxes = fGov.newVectorField(shape_u=fGov.shapeFaces_u, shape_v=fGov.shapeFaces_v)
 
-    def updateSourceField(self, mesh, fieldReg):
+        self.initializeFields(fieldReg)
+        self.linkDepFieldToModel(fieldFlowModelLink)
+
+    def updateSourceField(self, fieldReg):
+        self._sourceField.Sc.data = 0.0
+        self._sourceField.Sp.data = 0.0
         constHeatSource = fieldReg[self._depVariableName]._source
-        self._sourceField.setConstantSource( constHeatSource*mesh._uniformSpacing )
+        self._sourceField.setConstantSource( constHeatSource*self._mesh._uniformSpacing )
 
     def linkDepFieldToModel(self, fieldFlowModelLink):
         fieldFlowModelLink[self._depVariableName] = self
 
-    def initializeFields(self, fieldReg, mesh):
+    def initializeFields(self, fieldReg):
         # adding neccessary field to registry
         # check if fields are not already defined
 
         fGov = fieldReg['governor']
         fieldReg[self._depVariableName] = fGov.newScalarField(shape=fGov.shapeVarScalarField)
-        #fieldReg[self._depVariableName] = fGov.scalarField(shape=fGov.shapeCVField)
         fieldReg[self._velocityFieldName] = fGov.newVectorField(shape_u=fGov.shapeFaces_u, shape_v=fGov.shapeFaces_v)
         fieldReg[self._diffusionCoeffName] = 0.0
 
-    # def updateBoundaryConditions(self, fieldReg):
-    #     # top, bottom zeroFlux, left, right Derichlet
-    #
-    #     phi = fieldReg[self._depVariableName]
-    #
-    #     phi.gw = 100
-    #     phi.ge = 500
-    #     phi.gn = phi.nb
-    #     phi.gs = phi.bs
-
-    def correctBCs(self):
+    def setDerichlet(self, loc, value):
         D = self._diffFluxes
+        F = self._convFluxes
         Sc = self._sourceField.Sc
         Sp = self._sourceField.Sp
 
-        # west
-        Sc.bw += 2* D.u.bw * 100
-        Sp.bw += D.u.bw
-        D.u.bw =0
+        if loc == 'left':
+            Sc.bw += ( 2.0 * D.u.bw + F.u.bw )* value
+            Sp.bw += 2.0 * D.u.bw + F.u.bw
+            D.u.bw = 0.0
+            F.u.bw = 0.0
+        elif loc == 'right':
+            Sc.be += ( 2.0 * D.u.be - F.u.be) * value
+            Sp.be += 2.0 * D.u.be - F.u.be
+            D.u.be = 0.0
+            F.u.be = 0.0
+        elif loc == 'top':
+            Sc.bn += ( 2.0 * D.v.bn - F.v.bn) * value
+            Sp.bn +=  2.0 * D.v.bn - F.v.bn
+            D.v.bn = 0.0
+            F.v.bn = 0.0
+        elif loc == 'bottom':
+            Sc.bs += ( 2.0 * D.v.bs + F.v.bs) * value
+            Sp.bs += 2.0 * D.u.bs + F.v.bs
+            D.v.bs = 0.0
+            F.v.bs = 0.0
 
-        # east
-        Sc.be += 2*D.u.be * 500
-        Sp.be += D.u.be
-        D.u.be = 0
+    def setVonNeumann(self, loc):
+        D = self._diffFluxes
+        # Sc = self._sourceField.Sc
+        # Sp = self._sourceField.Sp
 
-        # north
-        Sp.bn += D.v.bn
-        D.v.nb = 0
+        if loc == 'left':
+            D.u.bw = 0.0
+        elif loc == 'right':
+            D.u.be = 0.0
+        elif loc == 'top':
+            D.v.bn = 0.0
+        elif loc == 'bottom':
+            D.v.bs = 0.0
 
-        # south
-        Sp.bs += D.v.bs
-        D.v.ns = 0
+    def correctBCs(self, fieldReg):
+        for loc, type in fieldReg[self._depVariableName]._boundary.items():
+            if type == 'zeroGradient':
+                self.setVonNeumann(loc)
+            else:
+                value = type  # I need a better interface
+                self.setDerichlet(loc, value)
 
+    # this is the most important FM method. The others could possibly be base class methods
     def updateFluxes(self, fieldReg):
-        self._convFluxes = fieldReg[self._velocityFieldName]
-        print(fieldReg['invCellDist'].u.data)
-        print(fieldReg['invCellDist'].v.data)
+        self._convFluxes = fieldReg[self._velocityFieldName] * self._mesh.calcFaceAreas(fieldReg['governor'])
+        self._diffFluxes = fieldReg['invCellDist'] * fieldReg[self._diffusionCoeffName] * self._mesh.calcFaceAreas(fieldReg['governor'])
 
-        self._diffFluxes = fieldReg['invCellDist'] * fieldReg[self._diffusionCoeffName]
+
+
+
+
+
+
+
+
+
+
+
+
+#-----------------------------
 
 class IncompressibleMomentumComp():
 

@@ -31,44 +31,29 @@ class Simulation:
         }
 
         self._mesh.defineReciprocalDistances(self._fieldRegistry)
-
         # this dict relates every field to its governing flowmodel
         self._fieldFlowModelLink = {}
-
-        # why is the linear equation system defined here?
-        # should I not just have one? they are approx same size anyway
         self._eqSystem = LinearEquationSystems.linearSystem(self._mesh)
-        #self._vectorLinEqSystem = LinearEquationSystems.linearSystem(self._mesh, type='vector_U')
-
-        #self._flowmodels = [fm(self._mesh, self._geometry, self._fieldRegistry, self._fieldFlowModelLink) for fm in flowmodels]
         for fm in flowmodels:
-            fm.initializeFields(self._fieldRegistry, self._mesh)
-            fm.initializeFluxesAndSource(self._fieldRegistry)
-            fm.linkDepFieldToModel(self._fieldFlowModelLink)
-
+            fm.initialize(self._mesh, self._fieldRegistry, self._fieldFlowModelLink)
+            
     def solve(self, fieldname):
 
         field = self._fieldRegistry[fieldname]
         flowmodel = self._fieldFlowModelLink[fieldname]
 
         self.update( flowmodel, field )
-        #flowmodel.updateLinearEquationSystem(self._mesh, self._fieldRegistry, self._scalarLinEqSystem)
-
         field.internal = self._eqSystem.solve()
-        #self._fieldRegistry[fieldname].internalEntriesEW = self._scalarLinEqSystem.solve()
 
 
     def update(self, flowmodel, field):
         flowmodel.updateFluxes(self._fieldRegistry)
-        flowmodel.updateSourceField(self._mesh, self._fieldRegistry)
-#        S = flowmodel.calcSourceField(self._mesh, self._fieldRegistry)
-        flowmodel.correctBCs()
+        flowmodel.updateSourceField(self._fieldRegistry)
+        flowmodel.correctBCs(self._fieldRegistry)
 
-        S = flowmodel._sourceField
-        F = flowmodel._convFluxes
-        D = flowmodel._diffFluxes
-        self._eqSystem.update( F,D,S,field, self._fieldRegistry['governor'] )  # field is only passed because I don't treat the BCs in fluxes
-
+        self._eqSystem.update( F=flowmodel._convFluxes,
+                               D=flowmodel._diffFluxes,
+                               S=flowmodel._sourceField)
 
 
 #--------- could also be external functions:

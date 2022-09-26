@@ -37,10 +37,8 @@ class cartesian2D():
     # def getInverseCellDistances(self):
     #     return self._invCellDist
 
-    def calcFaceAreas(self, fieldReg):
-        fGov = fieldReg['governor']
-        return fGov.vectorField(shape_u=fGov.shapeStaggered_U, shape_v=fGov.shapeStaggered_V, value=1e-2)
-        #return Fields.vectorField.fromMesh(self, value=1.0)
+    def calcFaceAreas(self, fGov):
+        return fGov.newVectorField(shape_u=fGov.shapeFaces_u, shape_v=fGov.shapeFaces_v, value=1)
 
     def getStats(self):
         print( self._nbCells )
