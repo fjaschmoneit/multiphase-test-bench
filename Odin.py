@@ -43,18 +43,17 @@ class Simulation:
         flowmodel = self._fieldFlowModelLink[fieldname]
 
         self.update( flowmodel, field )
-        field.internal = self._eqSystem.solve()
-
+        field.data = self._eqSystem.solve()# not applicable for scalar fields
 
     def update(self, flowmodel, field):
         flowmodel.updateFluxes(self._fieldRegistry)
-        flowmodel.updateSourceField(self._fieldRegistry)
+        #flowmodel.updateSourceField(self._fieldRegistry)
         flowmodel.correctBCs(self._fieldRegistry)
 
         self._eqSystem.update( F=flowmodel._convFluxes,
                                D=flowmodel._diffFluxes,
-                               S=flowmodel._sourceField)
-
+                               Sc=flowmodel._sourceField_c,
+                               Sp=flowmodel._sourceField_p)
 
 #--------- could also be external functions:
 

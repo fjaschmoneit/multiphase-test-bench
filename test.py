@@ -1,9 +1,10 @@
-import LinearEquationSystems
-import Mesh
 
-mesh = Mesh.cartesian2D(1,0.1,10)
-Sys = LinearEquationSystems.linearSystem(mesh)
-Sys.update()
 
-x = Sys.solve()
-print(x)
+def test(a):
+    if a:
+        return 1
+    else:
+        return 0
+
+for i in ['a', 'b', '0', [1,2,3] ]:
+    print(test(i))

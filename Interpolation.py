@@ -54,13 +54,12 @@ def cellToVector(cellField, mesh, scheme='centralDifference'):
 #     sf._raw[:,:] /= 4.0
 #     return sf
 # #    return Fields.scalarField(mesh, 10)
-
-
 #
-# def cellToVertex(cellField, scheme='centralDifference'):
+# def cellToVertex(cellField, fieldReg, scheme='centralDifference'):
 #
-#     mesh = cellField._mesh
-#     vf = Fields.vertexField(mesh)
+#     fGov = fieldReg['governor']
+#     vf = fGov.newScalarField(shape=fGov.shapeVertices)
+#
 #
 #     if scheme == 'centralDifference':
 #

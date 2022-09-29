@@ -18,18 +18,16 @@ class cartesian2D():
 
         fGov = fieldReg['governor']
 
-        ff = fGov.newVectorField(shape_u=fGov.shapeFaces_u, shape_v=fGov.shapeFaces_v)
-        #ff = Fields.vectorField.fromShapes( self.shapeStaggered_U, self.shapeStaggered_V )
-        ff.u.data =  1.0/self._uniformSpacing
-        ff.v.data =  1.0/self._uniformSpacing
+        rCellDist = fGov.newFaceField(shape_u=fGov.shapeFaces_u, shape_v=fGov.shapeFaces_v)
+        rCellDist.u.fill(  1.0/self._uniformSpacing )
+        rCellDist.v.fill(  1.0/self._uniformSpacing )
+        fieldReg['invCellDist'] = rCellDist
+        #
+        # rFaceDist = fGov.newVectorField(shape_u=fGov.shapeCVField, shape_v=fGov.shapeCVField)
+        # rFaceDist.u = 1.0/self._uniformSpacing
+        # rFaceDist.v = 1.0 / self._uniformSpacing
+        # fieldReg['invFaceDist'] = rFaceDist
 
-        # ff.u.be *= 2
-        # ff.u.bw *= 2
-        # ff.v.bn *= 2
-        # ff.v.bs *= 2
-
-        fieldReg['invCellDist'] = ff
-        # self._invCellDist = ff
 
     # def getCellVolumes(self):
     #     return Fields.scalarField(mesh=self, value=self._uniformSpacing**2)
@@ -38,7 +36,7 @@ class cartesian2D():
     #     return self._invCellDist
 
     def calcFaceAreas(self, fGov):
-        return fGov.newVectorField(shape_u=fGov.shapeFaces_u, shape_v=fGov.shapeFaces_v, value=1)
+        return fGov.newFaceField(shape_u=fGov.shapeFaces_u, shape_v=fGov.shapeFaces_v, value=1)
 
     def getStats(self):
         print( self._nbCells )
