@@ -7,7 +7,7 @@ class Geometry:
     def __init__(self, lengthX, lengthY):
         self._lenX = lengthX
         self._lenY = lengthY
-        self._boundaries = ['left', 'right', 'top', 'bottom']
+        self._boundaries = [('left', 'west'), ('right', 'east'), ('top', 'north'), ('bottom', 'south')]
         self._regions = ['internal']
 
     def getBoundaryNames(self):
@@ -35,19 +35,23 @@ class Simulation:
         self._fieldFlowModelLink = {}
         self._eqSystem = LinearEquationSystems.linearSystem(self._mesh)
         for fm in flowmodels:
-            fm.initialize(self._mesh, self._fieldRegistry, self._fieldFlowModelLink)
+            fm.initializeFlowModel(self._mesh, self._fieldRegistry, self._fieldFlowModelLink)
             
     def solve(self, fieldname):
 
         field = self._fieldRegistry[fieldname]
         flowmodel = self._fieldFlowModelLink[fieldname]
 
-        self.update( flowmodel, field )
-        field.data = self._eqSystem.solve()# not applicable for scalar fields
+        self.update( flowmodel)
+        sol = self._eqSystem.solve()
+        if isinstance(flowmodel, FlowModels.ScalarConvectionDiffusion):
+            field.data = sol
+        elif isinstance(flowmodel, FlowModels.IncompressibleMomentumComp):
+            field.internal_u = sol
 
-    def update(self, flowmodel, field):
+    def update(self, flowmodel):
         flowmodel.updateFluxes(self._fieldRegistry)
-        #flowmodel.updateSourceField(self._fieldRegistry)
+        flowmodel.updateSourceField(self._fieldRegistry, self._mesh)
         flowmodel.correctBCs(self._fieldRegistry)
 
         self._eqSystem.update( F=flowmodel._convFluxes,

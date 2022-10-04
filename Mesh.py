@@ -1,4 +1,5 @@
 # mesh class should only hold meta data
+import Fields
 
 class cartesian2D():
 
@@ -17,16 +18,11 @@ class cartesian2D():
         ### sets recCellDist as a parameterFaceField with inverse cell distances between internal cells and face-cell distance at boundary
 
         fGov = fieldReg['governor']
-
-        rCellDist = fGov.newFaceField(shape_u=fGov.shapeFaces_u, shape_v=fGov.shapeFaces_v)
-        rCellDist.u.fill(  1.0/self._uniformSpacing )
-        rCellDist.v.fill(  1.0/self._uniformSpacing )
+        rCellDist = Fields.fieldContainer(
+            u = fGov.newField(type='faces_u', value=1.0/self._uniformSpacing ),
+            v = fGov.newField(type='faces_v', value=1.0/self._uniformSpacing )
+        )
         fieldReg['invCellDist'] = rCellDist
-        #
-        # rFaceDist = fGov.newVectorField(shape_u=fGov.shapeCVField, shape_v=fGov.shapeCVField)
-        # rFaceDist.u = 1.0/self._uniformSpacing
-        # rFaceDist.v = 1.0 / self._uniformSpacing
-        # fieldReg['invFaceDist'] = rFaceDist
 
 
     # def getCellVolumes(self):
@@ -36,7 +32,11 @@ class cartesian2D():
     #     return self._invCellDist
 
     def calcFaceAreas(self, fGov):
-        return fGov.newFaceField(shape_u=fGov.shapeFaces_u, shape_v=fGov.shapeFaces_v, value=1)
+        fa = Fields.fieldContainer(
+            u=fGov.newField(type='faces_u', value=1),
+            v = fGov.newField(type='faces_v', value=1)
+        )
+        return fa
 
     def getStats(self):
         print( self._nbCells )

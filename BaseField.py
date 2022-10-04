@@ -2,6 +2,12 @@ import numpy as np
 
 
 
+# implement these free data views?
+def east(data):
+    return data[:, 1:]
+
+def west(data):
+    return data[:, :-1]
 
 class baseField:
 
@@ -26,8 +32,8 @@ class baseField:
 
         self._boundary = {}
 
-        self._internalValues_u = self._data[:,1:-1]
-        self._internalValues_v = self._data[1:-1,:]
+        self._internal_u = self._data[:,1:-1]
+        self._internal_v = self._data[1:-1,:]
 
         # directional values:
         self._east = self._data[:, 1:]
@@ -68,16 +74,6 @@ class baseField:
         field = np.ndarray(shape=shape, dtype=float, order='C')
         field.fill(value)
         return field
-    #
-    # @staticmethod
-    # def setShape(shape, ghostSwitch):
-    #     if ghostSwitch:
-    #         shapelist = list(shape)
-    #         shapelist[0] += 2
-    #         shapelist[1] += 2
-    #         return tuple(shapelist)
-    #     else:
-    #         return shape
 
     # a copy constructor only for the base class makes little sense
     @classmethod
@@ -87,11 +83,27 @@ class baseField:
     def fill(self, value):
         self._data[:,:] = value
 
-    # Should be done by flowmodel
-    def setBoundaryCondition(self, boundaryName, boundaryType):
-        self._boundary[boundaryName] = boundaryType
-        if boundaryType != 'zeroGradient':  # fix boundary conditions!!
-            self.bw = boundaryType
+    def defineBoundaryCondition(self, boundaryName, boundaryType, **kwargs):
+        value = kwargs.get('value', None)
+        self._boundary[boundaryName] = (boundaryType, value)
+
+        if boundaryType == 'fixedValue':
+            if boundaryName == 'top':
+                self.bn.fill( value )
+            elif boundaryName == 'bottom':
+                self.bs.fill( value )
+            elif boundaryName == 'right':
+                self.be.fill( value )
+            elif boundaryName == 'left':
+                self.bw.fill(value)
+
+
+    # # Should be done by flowmodel
+    # def setBoundaryCondition(self, boundaryName, boundaryType, value):
+    # def setBoundaryCondition(self, kwargs):
+    #     self._boundary[boundaryName] = boundaryType
+    #     if boundaryType != 'zeroGradient':  # fix boundary conditions
+    #         self.bw = boundaryType
 
     @property
     def internal(self):
@@ -115,18 +127,18 @@ class baseField:
         self._data[:,:] = x
 
     @property
-    def internalValues_u(self):
-        return self._internalValues_u
-    @internalValues_u.setter
-    def internalValues_u(self,x):
-        self._internalValues_u[:,:] = x
+    def internal_u(self):
+        return self._internal_u
+    @internal_u.setter
+    def internal_u(self,x):
+        self._internal_u[:,:] = x
 
     @property
-    def internalValues_v(self):
-        return self._internalValues_v
-    @internalValues_v.setter
-    def internalValues_v(self, x):
-        self._internalValues_v[:, :] = x
+    def internal_v(self):
+        return self._internal_v
+    @internal_v.setter
+    def internal_v(self, x):
+        self._internal_v[:, :] = x
 
     @property
     def be(self):
