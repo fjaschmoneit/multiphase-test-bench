@@ -1,14 +1,11 @@
-import Fields
-
-
 
 def grad_u(field, fieldReg):
+    fGov = fieldReg['governor']
+    #field = fieldReg[fieldname]
     rCellDist_u = fieldReg['invCellDist'].u  # a faceField
-    grad = (field.east - field.west)*rCellDist_u.internal_u
-    return grad
-
-
-
+    #grad = fGov.newField(type='faces_u', value=0.0)
+    #grad.internal_u =
+    return (field.east - field.west)*rCellDist_u.internal_u
 
 
 

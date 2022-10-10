@@ -14,13 +14,13 @@ class cartesian2D():
         self._nbCells = self._cells_x*self._cells_y
 
 
-    def defineReciprocalDistances(self, fieldReg):
+    def defineReciprocalDistances(self, fieldCreator, fieldReg):
         ### sets recCellDist as a parameterFaceField with inverse cell distances between internal cells and face-cell distance at boundary
 
-        fGov = fieldReg['governor']
+        #fGov = fieldReg['governor']
         rCellDist = Fields.fieldContainer(
-            u = fGov.newField(type='faces_u', value=1.0/self._uniformSpacing ),
-            v = fGov.newField(type='faces_v', value=1.0/self._uniformSpacing )
+            u = fieldCreator.newField(type='faces_u', value=1.0/self._uniformSpacing ),
+            v = fieldCreator.newField(type='faces_v', value=1.0/self._uniformSpacing )
         )
         fieldReg['invCellDist'] = rCellDist
 

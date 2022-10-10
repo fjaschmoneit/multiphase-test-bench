@@ -1,4 +1,4 @@
-from Fields import fieldGovernor
+#from Fields import fieldGovernor
 #import ScalarField
 
 

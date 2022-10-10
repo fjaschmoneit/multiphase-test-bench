@@ -1,46 +1,47 @@
 import numpy as np
 import BaseField
 
-class fieldGovernor:
+class fieldCreator:
 
     def __init__(self, mesh):
-        # self.shapeCVField = (mesh._cells_y, mesh._cells_x)
-        # self.shapeVarScalarField = (mesh._cells_y + 2, mesh._cells_x + 2)  # including a ghost frame
-        # self.shapeFaces_u = (mesh._cells_y, mesh._cells_x + 1)
-        # self.shapeFaces_v = (mesh._cells_y + 1, mesh._cells_x)
-        # self.shapeVerticesInternal_u = (mesh._cells_y+1, mesh._cells_x-1)
-        # self.shapeFacesInternal_u = (mesh._cells_y, mesh._cells_x-1)
-        #
-        # self.shapeVertices = (mesh._cells_y+1, mesh._cells_x+1)
-        # # self.shapeStaggerdFaces_u = (mesh._cells_y, mesh._cells_x-1)
-        # # self.shapeStaggerdFaces_v = (mesh._cells_y-1, mesh._cells_x)
 
         self._typeShapeDict = {
             'scalarCV'      : (mesh._cells_y, mesh._cells_x),
             'faces_u'       : (mesh._cells_y, mesh._cells_x + 1),
             'faces_v'       : (mesh._cells_y+1, mesh._cells_x),
-            'internalVertices_u' : (mesh._cells_y+1, mesh._cells_x-1),
-            'faceSource_u'  : (mesh._cells_y, mesh._cells_x-1),
-            'faceSource_v'  : (mesh._cells_y-1, mesh._cells_x)
+            'staggered_u'   : (mesh._cells_y, mesh._cells_x+2),
+            'vertex'        : (mesh._cells_y+1, mesh._cells_x+1),
         }
+
+    def getFluxShapesFromCVShape(self, shape):
+        [nb_v, nb_u] = list(shape)
+        return ( (nb_v, nb_u+1), (nb_v+1, nb_u) )
 
     def newField(self, **kwargs):
         if 'data' in kwargs:
             data = kwargs.get('data')
-            return BaseField.baseField(data)
+            govModel = kwargs.get('governingModel')
+            return BaseField.baseField(data, govModel)
+        elif 'shape' in kwargs:
+            shape = kwargs.get('shape')
+            value = kwargs.get('value', 0.0)
+            ghostSwitch = kwargs.get('includeGhostNodes', False)
+            govModel = kwargs.get('governingModel')
+            return BaseField.baseField.fromShape(shape, value, ghostSwitch, govModel)
         elif 'type' in kwargs:
             type = kwargs.get('type')
             shape = self._typeShapeDict[type]
             value = kwargs.get('value', 0.0)
             ghostSwitch = kwargs.get('includeGhostNodes', False)
-            return BaseField.baseField.fromShape(shape, value, ghostSwitch)
+            govModel = kwargs.get('governingModel')
+            return BaseField.baseField.fromShape(shape, value, ghostSwitch, govModel)
         else:
             print("newField must be called with type or data")
 
     @staticmethod
     def drawField(field, mesh):
         # fieldType = type(field)
-        fieldGovernor.drawCellField(field, mesh)
+        fieldCreator.drawCellField(field, mesh)
         # if fieldType == varScalarField or fieldType == ScalarField.scalarField:
         #     drawCellField(field, mesh)
         # elif fieldType == varVectorField or fieldType == vectorField:
@@ -98,14 +99,14 @@ class fieldContainer:
 
     @u.setter
     def u(self, x):
-        self._u = x
+        self._u.data[:,:] = x
 
     @property
     def v(self):
         return self._v
     @v.setter
     def v(self, x):
-        self._v = x
+        self._v.data[:,:] = x
 
 #
 # def drawFaceField(field, mesh):

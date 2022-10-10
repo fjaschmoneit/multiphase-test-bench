@@ -11,8 +11,9 @@ def west(data):
 
 class baseField:
 
-    def __init__(self, data, ghostSwitch=False):
+    def __init__(self, data, ghostSwitch=False, governingModel=None):
 
+        self._govModel = governingModel
         self._data = data
         self._internal = self._data[1:-1, 1:-1]
 
@@ -64,8 +65,8 @@ class baseField:
 
     #------------------ constructors
     @classmethod
-    def fromShape(cls, shape, value=0.0, ghostSwitch=False):
-        field = cls(data = cls.newDataField(shape, value), ghostSwitch=ghostSwitch )
+    def fromShape(cls, shape, value=0.0, ghostSwitch=False, governingModel=None):
+        field = cls(data = cls.newDataField(shape, value), ghostSwitch=ghostSwitch, governingModel=governingModel )
         return field
 
     # ----------------- static methods
@@ -83,6 +84,8 @@ class baseField:
     def fill(self, value):
         self._data[:,:] = value
 
+
+#---- functions staged for derived class:
     def defineBoundaryCondition(self, boundaryName, boundaryType, **kwargs):
         value = kwargs.get('value', None)
         self._boundary[boundaryName] = (boundaryType, value)
@@ -97,6 +100,20 @@ class baseField:
             elif boundaryName == 'left':
                 self.bw.fill(value)
 
+    def setGoverningTransportModel(self, model):
+        self._govModel = model
+
+    # should directly change the b vector in the lin eq system
+    def updateSource(self, value, mesh):
+        self._govModel.setSourceField( value * mesh._uniformSpacing )
+        #self._sourceField_c = self._fc.newField(type='scalarCV', value=value * self._mesh._uniformSpacing)
+
+    def solve(self):
+        self._govModel.updateFluxes()
+        #self._govModel.updateSourceField()
+        self._govModel.correctBCs()
+        self._govModel.updateLinSystem()
+        self._govModel.solve()
 
     # # Should be done by flowmodel
     # def setBoundaryCondition(self, boundaryName, boundaryType, value):
