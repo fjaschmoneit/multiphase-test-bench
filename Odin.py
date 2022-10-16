@@ -3,95 +3,127 @@ import Mesh
 import Fields
 import TransportModels
 import PressureModels
+from fieldAccess import *
 
 class Geometry:
     def __init__(self, lengthX, lengthY):
-        self._lenX = lengthX
-        self._lenY = lengthY
-        self._boundaries = [('left', 'west'), ('right', 'east'), ('top', 'north'), ('bottom', 'south')]
-        self._regions = ['internal']
+        self.lenX = lengthX
+        self.lenY = lengthY
+        self.boundaries = [('left', 'west'), ('right', 'east'), ('top', 'north'), ('bottom', 'south')]
+        self.regions = ['internal']
 
     def getBoundaryNames(self):
-        return self._boundaries
+        return self.boundaries
 
 def createGeometry( typeName, kwargs ):
     if typeName == 'rectangle':
         return Geometry(*kwargs)
 
 def createMesh(Geometry, res):
-    len_x = Geometry._lenX
-    len_y = Geometry._lenY
+    len_x = Geometry.lenX
+    len_y = Geometry.lenY
     return Mesh.cartesian2D(len_x = len_x, len_y= len_y, res=res)
+
+def getKeyFromValue(dict,value):
+    for k,v in dict.items():
+        if v == value:
+            return k
+    print("error:\t{value} not fount in dictionary {dict}".format(**locals()))
+
+def defineBoundaryCondition(field, boundaryName, boundaryType, fieldReg, **kwargs):
+    value = kwargs.get('value', None)
+
+    # fieldKey = getKeyFromValue(fieldReg, field)
+    # fieldReg[fieldKey]['boundaryConditions'][boundaryName] = (boundaryType, value)
+    field.boundary[boundaryName] = (boundaryType, value)
+
+    data = field.data
+    if boundaryType == 'fixedValue':
+        if boundaryName == 'top':
+            data[boundary_north] = value
+        elif boundaryName == 'bottom':
+            data[boundary_south] = value
+        elif boundaryName == 'right':
+            data[boundary_east] = value
+        elif boundaryName == 'left':
+            data[boundary_west] = value
+
+#
+# def setGoverningTransportModel(self, model):
+#     self._govModel = model
+#
+#
+# def getGoverningTransportModel(field, fieldReg):
+#     fieldKey = getKeyFromValue(fieldReg, field)
+#     return fieldReg[fieldKey]['governingModel']
+#     #return self._govModel
+
+
+# should directly change the b vector in the lin eq system
+def updateSource(field, value, mesh):
+    field.govModel.setSourceField(value * mesh._uniformSpacing)
+#    fieldReg[fieldname]['governingModel'].setSourceField(value * mesh._uniformSpacing)
+    # self._sourceField_c = self._fc.newField(type='scalarCV', value=value * self._mesh._uniformSpacing)
+
+def solve(field):
+    print('solving ', field.govModel)
+
+    field.govModel.updateFluxes()
+    # field.govModel.updateSourceField()
+    # field.govModel.correctBCs()
+    field.govModel.updateLinSystem()
+    return field.govModel.solve()
 
 class Simulation:
     def __init__(self, flowmodels, mesh, geometry, passiveFields={}):
-        self._mesh = mesh
-        self._geometry = geometry
-        self._fieldRegistry = {}
-        self._fieldCreator = Fields.fieldCreator(self._mesh)
+        self.mesh = mesh
+        self.geometry = geometry
+        self.fieldRegistry = {}
+        self.fieldCreator = Fields.fieldCreator(self.mesh)
 
-        self._mesh.defineReciprocalDistances(self._fieldCreator, self._fieldRegistry)
+        self.mesh.defineReciprocalDistances(self.fieldCreator, self.fieldRegistry)
         # this dict relates every field to its governing flowmodel
         self._fieldFlowModelLink = {}
-        self._eqSystem = LinearEquationSystems.linearSystem(self._mesh)
+        self._eqSystem = LinearEquationSystems.linearSystem(self.mesh)
 
         for fieldName, transportModelName in flowmodels.items():
-            transportModelInstance = transportModelName(mesh, self._fieldCreator, self._fieldRegistry, self._eqSystem)
-            flowmodels[fieldName] = transportModelInstance
-            self._fieldRegistry[fieldName] = transportModelInstance.getDepField()
+            transportModelInstance = transportModelName(mesh, self.fieldCreator, self.fieldRegistry, self._eqSystem)
+
+            self.fieldRegistry[fieldName] = transportModelInstance.getDepField()
+            self.fieldRegistry[fieldName].govModel = transportModelInstance
+            self.fieldRegistry[fieldName].boundary = { name[0] :None for name in self.geometry.boundaries }
+
+
+            # #= {
+            #     'field':transportModelInstance.getDepField(),
+            #     'governingModel': transportModelInstance,
+            #     'boundaryConditions':{ name[0] :None for name in self._geometry._boundaries }
+            # }
 
         for fieldName, fieldType in passiveFields.items():
-            self._fieldRegistry[fieldName] = self._fieldCreator.newField(type=fieldType)
+            self.fieldRegistry[fieldName]= self.fieldCreator.newField(type=fieldType)
 
-        for transportmodel in flowmodels.values():
-            transportmodel.linkOtherFields(self._fieldRegistry)
+        fieldnames = self.fieldRegistry.keys()
+        for fieldname in fieldnames:
+            govModel = self.fieldRegistry[fieldname].govModel
+            if govModel is not None:
+                govModel.linkOtherFields(self.fieldRegistry)
 
-            # fm(self._fieldCreator)
-            # self._fieldFlowModelLink[]
-            #fm.initializeFlowModel(self._mesh, self._fieldRegistry, self._fieldFlowModelLink)
-            
-    # def solve(self, fieldname):
-    #
-    #     field = self._fieldRegistry[fieldname]
-    #     flowmodel = self._fieldFlowModelLink[fieldname]
-    #
-    #     self.update( flowmodel)
-    #     field.data = self._eqSystem.solve()
+            # if 'governingModel' in self._fieldRegistry[fieldname]:
+            #     govModel = self._fieldRegistry[fieldname]['governingModel']
+            #     govModel.linkOtherFields(self._fieldRegistry)
+        # for transportmodel in flowmodels.values():
+        #     transportmodel.linkOtherFields(self._fieldRegistry)
 
-        #sol = self._eqSystem.solve()
-        # if isinstance(flowmodel, FlowModels.ScalarConvectionDiffusion):
-        #     field.data = sol
-        # elif isinstance(flowmodel, FlowModels.IncompressibleMomentumComp):
-        #     field.data = sol
 
-    # def update(self, flowmodel):
-    #     #
-    #     # flowmodel.updateFluxes(self._fieldRegistry)
-    #     # flowmodel.updateSourceField(self._fieldRegistry, self._mesh)
-    #     # flowmodel.correctBCs(self._fieldRegistry)
-    #     #
-    #     # Pressure system only needs one flux field:
-    #     if isinstance(flowmodel, FlowModels.Pressure):
-    #         flowmodel.updateFluxes_pressure(self._fieldRegistry, )
-    #         flowmodel.updateSourceField(self._fieldRegistry, self._mesh)
-    #         flowmodel.correctBCs(self._fieldRegistry)
-    #         self._eqSystem.updatePressureEq( P=flowmodel._presFluxes, Sc=flowmodel._sourceField_c )
-    #     else:
-    #         flowmodel.updateFluxes(self._fieldRegistry)
-    #         flowmodel.updateSourceField(self._fieldRegistry, self._mesh)
-    #         flowmodel.correctBCs(self._fieldRegistry)
-    #         self._eqSystem.update( F=flowmodel._convFluxes,
-    #                            D=flowmodel._diffFluxes,
-    #                            Sc=flowmodel._sourceField_c,
-    #                            Sp=flowmodel._sourceField_p)
 
-#--------- could also be external functions:
+    #--------- could also be external functions:
 
-    def getFieldRegistry(self):
-        return self._fieldRegistry
+    # def getFieldRegistry(self):
+    #     return self.fieldRegistry
 
     def display(self, field, mesh):
-        fGov = self._fieldCreator
+        fGov = self.fieldCreator
         #fGov = self._fieldRegistrAy['governor']
         fGov.drawField(field, mesh)     # should not be a field creator method
 

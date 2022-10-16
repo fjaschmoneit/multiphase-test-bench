@@ -1,5 +1,4 @@
 import numpy as np
-import BaseField
 
 class fieldCreator:
 
@@ -17,24 +16,26 @@ class fieldCreator:
         [nb_v, nb_u] = list(shape)
         return ( (nb_v, nb_u+1), (nb_v+1, nb_u) )
 
+
+
     def newField(self, **kwargs):
         if 'data' in kwargs:
             data = kwargs.get('data')
             govModel = kwargs.get('governingModel')
-            return BaseField.baseField(data, govModel)
+            return baseField(data, govModel)
         elif 'shape' in kwargs:
             shape = kwargs.get('shape')
             value = kwargs.get('value', 0.0)
             ghostSwitch = kwargs.get('includeGhostNodes', False)
             govModel = kwargs.get('governingModel')
-            return BaseField.baseField.fromShape(shape, value, ghostSwitch, govModel)
+            return baseField.fromShape(shape, value, ghostSwitch, govModel)
         elif 'type' in kwargs:
             type = kwargs.get('type')
             shape = self._typeShapeDict[type]
             value = kwargs.get('value', 0.0)
             ghostSwitch = kwargs.get('includeGhostNodes', False)
             govModel = kwargs.get('governingModel')
-            return BaseField.baseField.fromShape(shape, value, ghostSwitch, govModel)
+            return baseField.fromShape(shape, value, ghostSwitch, govModel)
         else:
             print("newField must be called with type or data")
 
@@ -69,54 +70,36 @@ class fieldCreator:
         plt.show()
 
 
+# ----------------- static methods
+def newDataField(shape, value=0.0):
+    field = np.ndarray(shape=shape, dtype=float, order='C')
+    field.fill(value)
+    return field
+
+class baseField:
+
+    def __init__(self, data, ghostSwitch=False, governingModel=None):
+
+        self.govModel = governingModel
+        self.data = data
+        self.boundary = {}
+
+    #------------------ constructors
+    @classmethod
+    def fromShape(cls, shape, value=0.0, ghostSwitch=False, governingModel=None):
+        field = cls(data = newDataField(shape, value), ghostSwitch=ghostSwitch, governingModel=governingModel )
+        return field
+
+    def fill(self, value):
+        self.data[:,:] = value
+
 
 
 class fieldContainer:
     def __init__(self, u, v):
         # these are base fields:
-        self._u = u
-        self._v = v
+        self.u = u
+        self.v = v
 
-#-------- defining algebra
-    def __add__(self, other):
-        u = self._u + other._u
-        v = self._v + other._v
-        return fieldContainer(u,v)
-
-    def __mul__(self, other):
-        if isinstance(other, fieldContainer):
-            return fieldContainer(self._u * other._u, self._v * other._v)
-        elif isinstance(other, type(1.0)):
-            return fieldContainer(self._u * other, self._v * other)
-        else:
-            print("multiplication not defined")
-
-    #-------- defining all getters and setters:
-
-    @property
-    def u(self):
-        return self._u
-
-    @u.setter
-    def u(self, x):
-        self._u.data[:,:] = x
-
-    @property
-    def v(self):
-        return self._v
-    @v.setter
-    def v(self, x):
-        self._v.data[:,:] = x
-
-#
-# def drawFaceField(field, mesh):
-#
-#     u_cell_primitive = Interpolation.getCellInterpolation(field._u, 'x')
-#     u_cell = scalarField(u_cell_primitive)
-#     #u_cell = scalarField(mesh=mesh, primitiveField=u_cell_primitive)
-#     drawCellField(u_cell, mesh)
-#
-#     v_cell_primitive = Interpolation.getCellInterpolation(field._v, 'y')
-#     v_cell = scalarField(v_cell_primitive)
-# #    v_cell = scalarField(mesh=mesh, primitiveField=v_cell_primitive)
-#     drawCellField(v_cell, mesh)
+        self.govModel = u.govModel
+        self.boundary = {}

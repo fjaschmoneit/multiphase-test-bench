@@ -1,14 +1,36 @@
 import numpy as np
+from fieldAccess import *
 
-a = np.zeros((2,6))
+
+def newField(shape):
+    #shape = kwargs.get("shape")
+    return np.ones(shape)
+
+
+
+N = 5
+
+shape = (N,N)
+
+
+A = np.ones(shape)
+for i in range(N):
+    for j in range(N):
+        A[i][j] = 10*i+j
+print(A)
+
+
+
+
+b = newField(shape)
+
+b*=20
+
+
+a = np.array(b)
+
+a-=15
+
+print(b)
 print(a)
 
-pGrad = -2  #Pa/m
-invCellDist = 10
-
-a[:,:1] = 0+0.5*invCellDist*pGrad
-for i in range(1,a.shape[1]):
-    a[:,i:i+1] = a[:,i-1:i] + invCellDist*pGrad
-
-
-print(a)

@@ -1,11 +1,12 @@
 
 def grad_u(field, fieldReg):
-    fGov = fieldReg['governor']
-    #field = fieldReg[fieldname]
     rCellDist_u = fieldReg['invCellDist'].u  # a faceField
-    #grad = fGov.newField(type='faces_u', value=0.0)
-    #grad.internal_u =
     return (field.east - field.west)*rCellDist_u.internal_u
+
+
+def grad_v(field, fieldReg):
+    rCellDist_v = fieldReg['invCellDist'].v  # a faceField
+    return (field.north - field.south)*rCellDist_v.internal_v
 
 
 
