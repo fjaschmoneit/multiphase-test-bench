@@ -5,11 +5,11 @@ class fieldCreator:
     def __init__(self, mesh):
 
         self._typeShapeDict = {
-            'scalarCV'      : (mesh._cells_y, mesh._cells_x),
-            'faces_u'       : (mesh._cells_y, mesh._cells_x + 1),
-            'faces_v'       : (mesh._cells_y+1, mesh._cells_x),
-            'staggered_u'   : (mesh._cells_y, mesh._cells_x+2),
-            'vertex'        : (mesh._cells_y+1, mesh._cells_x+1),
+            'scalarCV'      : (mesh.cells_y, mesh.cells_x),
+            'faces_u'       : (mesh.cells_y, mesh.cells_x + 1),
+            'faces_v'       : (mesh.cells_y+1, mesh.cells_x),
+            'staggered_u'   : (mesh.cells_y, mesh.cells_x+2),
+            'vertex'        : (mesh.cells_y+1, mesh.cells_x+1),
         }
 
     def getFluxShapesFromCVShape(self, shape):
@@ -52,10 +52,10 @@ class fieldCreator:
     def drawCellField(cellField, mesh):
         import matplotlib.pyplot as plt
 
-        nbcellsX = mesh._cells_x
-        nbcellsY = mesh._cells_y
-        lenX = mesh._lenX
-        lenY = mesh._lenY
+        nbcellsX = mesh.cells_x
+        nbcellsY = mesh.cells_y
+        lenX = mesh.lenX
+        lenY = mesh.lenY
 
         ax = plt.gca()
         map = ax.imshow(cellField.data, cmap='hot', interpolation='nearest')

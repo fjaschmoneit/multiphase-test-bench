@@ -19,7 +19,8 @@ class Pressure:
         self._fc = fieldCreator
         self._depFieldShape = fieldCreator._typeShapeDict['scalarCV']
 
-        self._p = self._fc.newField(shape=self._depFieldShape, governingModel=self)
+        self.depField = self._fc.newField(shape=self._depFieldShape, governingModel=self)
+        self._p = self.depField
         self._sourceField_p = self._fc.newField(shape=self._depFieldShape, value=0.0)
         self._sourceField_c = self._fc.newField(shape=self._depFieldShape, value=0.0)
 

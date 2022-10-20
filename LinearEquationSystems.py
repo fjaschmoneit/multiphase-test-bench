@@ -17,12 +17,12 @@ class linearSystem:
         self._b = np.zeros((5,))
 
     def solve(self):
+        # print(np.fmin(self._A,10))
+        # print(np.fmin(self._b,10))
         x = np.linalg.solve(self._A, self._b)
         return np.reshape( x, self._shape )
 
     def reset(self, shape):
-        # self._A.fill(0.0)
-        # self._b.fill(0.0)
         self._shape = shape
         nc= shape[0]*shape[1]
         self._A = np.zeros( (nc,nc) )

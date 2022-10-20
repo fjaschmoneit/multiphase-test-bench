@@ -36,17 +36,19 @@ def defineBoundaryCondition(field, boundaryName, boundaryType, fieldReg, **kwarg
     # fieldKey = getKeyFromValue(fieldReg, field)
     # fieldReg[fieldKey]['boundaryConditions'][boundaryName] = (boundaryType, value)
     field.boundary[boundaryName] = (boundaryType, value)
-
-    data = field.data
+    #data = field.data
     if boundaryType == 'fixedValue':
-        if boundaryName == 'top':
-            data[boundary_north] = value
-        elif boundaryName == 'bottom':
-            data[boundary_south] = value
-        elif boundaryName == 'right':
-            data[boundary_east] = value
+# #         if boundaryName == 'top':
+# #             field.govModel.depField.data[boundary_north].fill(value)
+# #         elif boundaryName == 'bottom':
+# #             field.govModel.depField.data[boundary_south].fill(value)
+# # #            field.data[boundary_south] = value
+        if boundaryName == 'right':
+            #field.govModel.depField.data[boundary_east].fill(value)
+            field.data[boundary_east] = value
         elif boundaryName == 'left':
-            data[boundary_west] = value
+#            field.govModel.depField.data[boundary_west].fill(value)
+            field.data[boundary_west] = value
 
 #
 # def setGoverningTransportModel(self, model):
@@ -61,12 +63,13 @@ def defineBoundaryCondition(field, boundaryName, boundaryType, fieldReg, **kwarg
 
 # should directly change the b vector in the lin eq system
 def updateSource(field, value, mesh):
-    field.govModel.setSourceField(value * mesh._uniformSpacing)
+    field.govModel.setSourceField(value * mesh.uniformSpacing)
 #    fieldReg[fieldname]['governingModel'].setSourceField(value * mesh._uniformSpacing)
     # self._sourceField_c = self._fc.newField(type='scalarCV', value=value * self._mesh._uniformSpacing)
 
+
 def solve(field):
-    print('solving ', field.govModel)
+    #print('solving ', field.govModel)
 
     field.govModel.updateFluxes()
     # field.govModel.updateSourceField()
