@@ -1,36 +1,18 @@
 import numpy as np
 from fieldAccess import *
+import Interpolation
+import Fields
 
+nx = 4
+ny = 1
+a = Fields.newDataField((ny,nx))
 
-def newField(shape):
-    #shape = kwargs.get("shape")
-    return np.ones(shape)
+for i in range(ny):
+    for j in range(nx):
+        a[i][j] = i+1 +10*(j+1)
 
-
-
-N = 5
-
-shape = (N,N)
-
-
-A = np.ones(shape)
-for i in range(N):
-    for j in range(N):
-        A[i][j] = 10*i+j
-print(A)
-
-
-
-
-b = newField(shape)
-
-b*=20
-
-
-a = np.array(b)
-
-a-=15
-
-print(b)
 print(a)
 
+b = Interpolation.facesToNodes(a,'u')
+
+print(b)

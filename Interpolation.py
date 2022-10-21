@@ -2,10 +2,29 @@
 #import ScalarField
 
 
+#
+# def scalarToFaces_EW(scalarField):
+#     # returns a primitive field
+#     return 0.5*(scalarField._raw[:,1:] + scalarField._raw[:,:-1])
+import Fields
+from fieldAccess import*
 
-def scalarToFaces_EW(scalarField):
-    # returns a primitive field
-    return 0.5*(scalarField._raw[:,1:] + scalarField._raw[:,:-1])
+def toStaggered(field, direction):
+    (ny, nx) = field.shape
+    if direction == 'u':
+        intplField = Fields.newDataField((ny,nx+1))
+        intplField[east] = field
+        intplField[west] += field
+        #intplField[internal_u] *= 0.5
+        intplField *= 0.5
+    elif direction == 'v':
+        intplField = Fields.newDataField((ny+1,nx))
+        intplField[south] = field
+        intplField[north] += field
+        #intplField[internal_u] *= 0.5
+        intplField *= 0.5
+
+    return intplField
 
 #returns a primitive cell field as linear interpolation of faces in primitive facefield
 def getCellInterpolation(primitiveFaceField, direction):

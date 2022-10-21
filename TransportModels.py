@@ -26,18 +26,18 @@ class scalarTransport(TransportBase.transportBase):
     def updateFluxes(self):
         self.reset()
 
-        faceAreas = self._mesh.calcFaceAreas(self._fc)
+        faceAreas = self.mesh.calcFaceAreas(self.fc)
         faceAreas_u = faceAreas.u.data
         faceAreas_v = faceAreas.v.data
 
-        rCellDist_u = self._fieldReg['invCellDist'].u.data
-        rCellDist_v = self._fieldReg['invCellDist'].v.data
+        rCellDist_u = self.fieldReg['invCellDist'].u.data
+        rCellDist_v = self.fieldReg['invCellDist'].v.data
 
         F_u = self.calcConvFlux(self.u.data, faceAreas_u)
         F_v = self.calcConvFlux(self.v.data, faceAreas_v)
 
-        D_u = self.calcDiffFlux(rCellDist_u, self._diffusionCoefficient, faceAreas_u)
-        D_v = self.calcDiffFlux(rCellDist_v, self._diffusionCoefficient, faceAreas_v)
+        D_u = self.calcDiffFlux(rCellDist_u, self.diffusionCoefficient, faceAreas_u)
+        D_v = self.calcDiffFlux(rCellDist_v, self.diffusionCoefficient, faceAreas_v)
 
         self.a_w = DifferenceSchemes.centralDifference( D_u[west], F_u[west], 'west' )
         self.a_e = DifferenceSchemes.centralDifference(D_u[east], F_u[east], 'east')
@@ -54,23 +54,14 @@ class scalarTransport(TransportBase.transportBase):
     def setDerichlet(self, loc, value):
         BoundaryConditions.scalarBC.derichlet( loc=loc, value=value, transportInstance=self )
 
-    def updateLinSystem(self):
-        self._linSystem.reset(shape=self._depFieldShape)
-        self._linSystem.set_e_coeffs(self.a_e)
-        self._linSystem.set_w_coeffs(self.a_w)
-        self._linSystem.set_n_coeffs(self.a_n)
-        self._linSystem.set_s_coeffs(self.a_s)
-        self._linSystem.set_p_coeffs(self.a_p)
-        self._linSystem.set_b(self._sourceField_c)
-
     def updateSourceField(self):
         pass
 
 class staggeredTransport_u(TransportBase.transportBase):
 
     def __init__(self, mesh, fieldCreator, fieldReg, linSystem):
-        self._depFieldShape = fieldCreator._typeShapeDict['faces_u']
-        super().__init__(mesh, fieldCreator, fieldReg, linSystem, self._depFieldShape)
+        self.depFieldShape = fieldCreator.typeShapeDict['faces_u']
+        super().__init__(mesh, fieldCreator, fieldReg, linSystem, self.depFieldShape)
         self.u = self.depField
         self.setSourceField(0.0)
 
@@ -78,102 +69,33 @@ class staggeredTransport_u(TransportBase.transportBase):
         self.v = fieldReg['v']
         self.p = fieldReg['p']
 
-    def calcInternalConvFlux(self, vel, faceAreas):
-        f = vel*faceAreas
-        return 0.5*( f[east] + f[west] )
+    def calcConvFlux(self, vel, faceAreas, dir):
+        return Interpolation.toStaggered(vel*faceAreas, dir)
 
-    def calcInternalDiffFlux(self, invCellDist, diffCoeff, faceAreas):
-        f = diffCoeff*invCellDist*faceAreas
-        return 0.5*( f[east] + f[west] )
-
-
-    # # what flux do I define in the ghost cells?
-    def calcConvFlux_old(self, vel, faceAreas):
-        (ny,nx) = vel.shape
-        velA = Fields.newDataField((ny,nx+1), value=0.0)
-        alpha = vel * faceAreas
-        velA[west] += 0.5*alpha
-        velA[east] += 0.5*alpha
-
-        # velA[boundary_east] *=200
-        # velA[boundary_west] *=200
-
-        return velA
-
-    def calcDiffFlux_old(self, invCellDist, diffCoeff, faceAreas):
-        (ny,nx) = faceAreas.shape
-        DA = Fields.newDataField((ny,nx+1), value=0.0)
-        alpha = diffCoeff*invCellDist  * faceAreas
-        DA[west] += 0.5*alpha
-        DA[east] += 0.5*alpha
-        # DA[boundary_west] *= 2
-        # DA[boundary_east] *= 2
-        return DA
+    def calcDiffFlux(self, invCellDist, diffCoeff, faceAreas, dir):
+        return Interpolation.toStaggered(diffCoeff*invCellDist*faceAreas, dir)
 
     def updateFluxes(self):
         self.reset()
 
-        faceAreas = self._mesh.calcFaceAreas(self._fc)
+        faceAreas = self.mesh.calcFaceAreas(self.fc)
         faceAreas_u = faceAreas.u.data
         faceAreas_v = faceAreas.v.data
 
-        rCellDist_u = self._fieldReg['invCellDist'].u.data
-        rCellDist_v = self._fieldReg['invCellDist'].v.data
+        rCellDist_u = self.fieldReg['invCellDist'].u.data
+        rCellDist_v = self.fieldReg['invCellDist'].v.data
 
-        # can I not implement my BC in the flux equations here?
-        F_u = self.calcInternalConvFlux(self.u.data, faceAreas_u)
-        #F_v = self.calcInternalConvFlux(self.v.data, faceAreas_v)
+        F_u = self.calcConvFlux(self.u.data, faceAreas_u, 'u')
+        F_v = self.calcConvFlux(self.v.data, faceAreas_v, 'u')
 
-        D_u = self.calcInternalDiffFlux(rCellDist_u, self._diffusionCoefficient, faceAreas_u)
-        #D_v = self.calcInternalDiffFlux(rCellDist_v, self._diffusionCoefficient, faceAreas_v)
+        D_u = self.calcDiffFlux(rCellDist_u, self.diffusionCoefficient, faceAreas_u, 'u')
+        D_v = self.calcDiffFlux(rCellDist_v, self.diffusionCoefficient, faceAreas_v, 'u')
 
-        self.a_w[east] = DifferenceSchemes.centralDifference( D_u, F_u, 'west' )
-        self.a_e[west] = DifferenceSchemes.centralDifference(D_u, F_u, 'east')
-
-        F_v = self.calcConvFlux_old(self.v.data, faceAreas_v)
-        D_v = self.calcDiffFlux_old(rCellDist_v, self._diffusionCoefficient, faceAreas_v)
+        self.a_w[east] = DifferenceSchemes.centralDifference(D_u, F_u, 'west' )[internal_u]
+        self.a_e[west] = DifferenceSchemes.centralDifference(D_u, F_u, 'east')[internal_u]
 
         self.a_n = DifferenceSchemes.centralDifference(D_v, F_v, 'north')[north]
         self.a_s = DifferenceSchemes.centralDifference(D_v, F_v, 'south')[south]
-
-#------------- BOUNDARIES ____________
-        #---------WEST__________
-        # fixed boundary
-        # self.a_p[boundary_west] += 1e15
-        # self._sourceField_c[boundary_west] += 1e15 * 2
-        # self.a_w[boundary_west] = 0.0
-
-
-        #---------EAST__________
-        #fixed value
-        # self.a_p[boundary_east] += 1e15
-        # self._sourceField_c[boundary_east] += 1e15 * 2
-        # self.a_e[boundary_east] = 0.0
-
-        # zero Grad at east: nothing tobe done in flow direction
-      #  self.a_w[boundary_west] = self.a_w[boundary_nb1_west]
-        #self.a_e[boundary_east] = -2*self.a_w[boundary_east]
-        #self.a_e[boundary_east] = 0
-
-        #---------NORTH__________
-
-        # fixed value
-        #self.a_n[boundary_north] -= self._diffusionCoefficient*faceAreas_v[boundary_north]*2.0*rCellDist_v[boundary_north]
-        #self.a_n[boundary_north] = 1 * 1 * 2.0 * 1
-
-        # zero Grad
-        #self.a_e[boundary_north] = 0.0
-        #self.a_n[boundary_north] = 0
-
-
-        #---------SOUTH__________
-
-        # zeroGrad at south:
-#        self.a_s[boundary_south] = self.a_s[boundary_nb1_south]
-        #self.a_s[boundary_south] = 9
-
-        # fixedValue at south:
-       # self.a_s[boundary_south] = 1 * 1 * 2.0 * 1
 
         self.correctBCs()
 
@@ -196,61 +118,46 @@ class staggeredTransport_u(TransportBase.transportBase):
         # in flow direction:
         if location == 'left':
             self.a_p[boundary_west] += 1e15
-            self._sourceField_c[boundary_west] += 1e15 * value
+            self.sourceField_c[boundary_west] += 1e15 * value
             self.a_w[boundary_west] = 0.0
         elif location == 'right':
             self.a_p[boundary_east] += 1e15
-            self._sourceField_c[boundary_east] += 1e15 * value
+            self.sourceField_c[boundary_east] += 1e15 * value
             self.a_e[boundary_east] = 0.0
 
         # across flow direction
         elif location == 'top':
-            # self.a_n[boundary_north] -= self._diffusionCoefficient*faceAreas_v[boundary_north]*2.0*rCellDist_v[boundary_north]
-            self.a_n[boundary_north] = 1 * 1 * 2.0 * 1
+            faceAreas = self.mesh.calcFaceAreas(self.fc)
+            faceAreas_v = faceAreas.v.data
+
+            invCellWallDist_A = 2.0 * self.fieldReg['invCellDist'].v.data[boundary_north]*faceAreas_v[boundary_north]
+            nodeFluxes = Interpolation.toStaggered(invCellWallDist_A, 'u')
+
+            self.a_p[boundary_north] += self.diffusionCoefficient*nodeFluxes
+            self.sourceField_c[boundary_north] += self.diffusionCoefficient*nodeFluxes*value
+            self.a_n[boundary_north] = 0
+
         elif location == 'bottom':
-            # self.a_n[boundary_north] -= self._diffusionCoefficient*faceAreas_v[boundary_north]*2.0*rCellDist_v[boundary_north]
-            self.a_s[boundary_south] = 1 * 1 * 2.0 * 1
+            faceAreas = self.mesh.calcFaceAreas(self.fc)
+            faceAreas_v = faceAreas.v.data
 
+            invCellWallDist_A = 2.0 * self.fieldReg['invCellDist'].v.data[boundary_south]*faceAreas_v[boundary_south]
+            nodeFluxes = Interpolation.toStaggered(invCellWallDist_A, 'u')
 
-    def updateLinSystem(self):
-        self._linSystem.reset(shape=self._depFieldShape)
-        self._linSystem.set_e_coeffs(self.a_e)
-        self._linSystem.set_w_coeffs(self.a_w)
-        self._linSystem.set_n_coeffs(self.a_n)
-        self._linSystem.set_s_coeffs(self.a_s)
-        self._linSystem.set_p_coeffs(self.a_p)
-        self._linSystem.set_b(self._sourceField_c)
+            self.a_p[boundary_south] += self.diffusionCoefficient*nodeFluxes
+            self.sourceField_c[boundary_south] += self.diffusionCoefficient*nodeFluxes*value
+            self.a_s[boundary_south] = 0
 
     def updateSourceField(self):
-        faceAreas_u = self._mesh.calcFaceAreas(self._fc).u
-        gradP_u = Differentiation.grad_u(self.p, self._fieldReg)
-        self._sourceField_c.internal_u = -gradP_u * faceAreas_u.internal_u
-
-
-
-
-
-#        BoundaryConditions.staggeredBC.derichlet(location, value, F=self._convFluxes, D=self._diffFluxes,
- #                                             Sc=self._sourceField_c, Sp=self._sourceField_p)
-    # # implement difference schemes here
-    # def getTotalFlux_e(self):
-    #     return -(self._diffFluxes.u.east - 0.5*self._convFluxes.u.east)
-    #
-    # def getTotalFlux_w(self):
-    #     return -(self._diffFluxes.u.west + 0.5 * self._convFluxes.u.west)
-
-    # def getTotalFlux_n(self):
-    #     return -(self._diffFluxes.v.north - 0.5 * self._convFluxes.v.north)
-    #
-    # def getTotalFlux_s(self):
-    #     return -(self._diffFluxes.v.south - 0.5 * self._convFluxes.v.south)
+        faceAreas_u = self.mesh.calcFaceAreas(self.fc).u.data
+        gradP_u = Differentiation.grad_u(self.p.data, self.fieldReg)
+        self.sourceField_c[internal_u] = -gradP_u * faceAreas_u[internal_u]
 
 class staggeredTransport_v(TransportBase.transportBase):
 
     def __init__(self, mesh, fieldCreator, fieldReg, linSystem):
-        self._depFieldShape = fieldCreator._typeShapeDict['faces_v']
-        super().__init__(mesh, fieldCreator, fieldReg, linSystem, self._depFieldShape)
-
+        self.depFieldShape = fieldCreator.typeShapeDict['faces_v']
+        super().__init__(mesh, fieldCreator, fieldReg, linSystem, self.depFieldShape)
         self.v = self.depField
         self.setSourceField(0.0)
 
@@ -258,39 +165,88 @@ class staggeredTransport_v(TransportBase.transportBase):
         self.u = fieldReg['u']
         self.p = fieldReg['p']
 
-        # this is the most important method. The others could possibly be base class methods
+    def calcConvFlux(self, vel, faceAreas, dir):
+        return Interpolation.toStaggered(vel*faceAreas, dir)
+
+    def calcDiffFlux(self, invCellDist, diffCoeff, faceAreas, dir):
+        return Interpolation.toStaggered(diffCoeff*invCellDist*faceAreas, dir)
+
     def updateFluxes(self):
-        rCellDist_u = self._fieldReg['invCellDist'].u
-        rCellDist_v = self._fieldReg['invCellDist'].v
+        self.reset()
 
-        self._convFluxes.u.internal_v = 0.5 * (self.u.north + self.u.south)
-        self._convFluxes.v.internal_v = 0.5 * (self.v.north + self.v.south)
+        faceAreas = self.mesh.calcFaceAreas(self.fc)
+        faceAreas_u = faceAreas.u.data
+        faceAreas_v = faceAreas.v.data
 
-        self._diffFluxes.u.internal_v = 0.5 * (rCellDist_u.north + rCellDist_u.south) * self._diffusionCoefficient
-        self._diffFluxes.v.internal_v = 0.5 * (rCellDist_v.north + rCellDist_v.south) * self._diffusionCoefficient
+        rCellDist_u = self.fieldReg['invCellDist'].u.data
+        rCellDist_v = self.fieldReg['invCellDist'].v.data
 
-    def updateSourceField(self):
-        faceAreas_v = self._mesh.calcFaceAreas(self._fc).v
-        gradP_v = Differentiation.grad_v(self.p, self._fieldReg)
-        self._sourceField_c.internal_v = -gradP_v*faceAreas_v.internal_v
+        F_u = self.calcConvFlux(self.u.data, faceAreas_u, 'v')
+        F_v = self.calcConvFlux(self.v.data, faceAreas_v, 'v')
+
+        D_u = self.calcDiffFlux(rCellDist_u, self.diffusionCoefficient, faceAreas_u, 'v')
+        D_v = self.calcDiffFlux(rCellDist_v, self.diffusionCoefficient, faceAreas_v, 'v')
+
+        self.a_n[south] = DifferenceSchemes.centralDifference(D_v, F_v, 'north')[internal_v]
+        self.a_s[north] = DifferenceSchemes.centralDifference(D_v, F_v, 'south')[internal_v]
+
+        self.a_e = DifferenceSchemes.centralDifference(D_u, F_u, 'east')[east]
+        self.a_w = DifferenceSchemes.centralDifference(D_u, F_u, 'west')[west]
+
+        self.correctBCs()
+
+        self.a_p += self.a_w + self.a_e + self.a_s + self.a_n
+        #self.a_p[internal_u] += F_u[east] - F_u[west] + F_v[south] - F_v[north]    # do I need to include these terms when u itself is transported?
 
     def setVonNeumann(self, location):
-        BoundaryConditions.staggeredBC.vonNeumann(location, F=self._convFluxes, D=self._diffFluxes,
-                                              Sc=self._sourceField_c, Sp=self._sourceField_p)
+        if location == 'left':
+            self.a_w[boundary_west] = 0
+        elif location == 'right':
+            self.a_e[boundary_east] = 0
+        elif location == 'top':
+            self.a_n[boundary_north] = 0
+        elif location == 'bottom':
+            self.a_s[boundary_south] = 0
 
     def setDerichlet(self, location, value):
-        BoundaryConditions.staggeredBC.derichlet(location, value, F=self._convFluxes, D=self._diffFluxes,
-                                              Sc=self._sourceField_c, Sp=self._sourceField_p)
+        # BoundaryConditions.staggeredBC.derichlet(location, value, self)
 
-    # implement difference schemes here
-    # def getTotalFlux_e(self):
-    #     return -(self._diffFluxes.u.east - 0.5*self._convFluxes.u.east)
-    #
-    # def getTotalFlux_w(self):
-    #     return -(self._diffFluxes.u.west + 0.5 * self._convFluxes.u.west)
+        # in flow direction:
+        if location == 'top':
+            self.a_p[boundary_north] += 1e15
+            self.sourceField_c[boundary_north] += 1e15 * value
+            self.a_n[boundary_north] = 0.0
+        elif location == 'bottom':
+            self.a_p[boundary_south] += 1e15
+            self.sourceField_c[boundary_south] += 1e15 * value
+            self.a_s[boundary_south] = 0.0
 
-    def getTotalFlux_n(self):
-        return -(self._diffFluxes.v.north - 0.5 * self._convFluxes.v.north)
+        # across flow direction
+        elif location == 'left':
+            faceAreas = self.mesh.calcFaceAreas(self.fc)
+            faceAreas_u = faceAreas.u.data
 
-    def getTotalFlux_s(self):
-        return -(self._diffFluxes.v.south + 0.5 * self._convFluxes.v.south)
+            invCellWallDist_A = 2.0 * self.fieldReg['invCellDist'].u.data[boundary_west]*faceAreas_u[boundary_west]
+            nodeFluxes = Interpolation.toStaggered(invCellWallDist_A, 'v')
+
+            self.a_p[boundary_west] += self.diffusionCoefficient*nodeFluxes
+            self.sourceField_c[boundary_west] += self.diffusionCoefficient*nodeFluxes*value
+            self.a_w[boundary_west] = 0
+
+        elif location == 'right':
+            faceAreas = self.mesh.calcFaceAreas(self.fc)
+            faceAreas_u = faceAreas.u.data
+
+            invCellWallDist_A = 2.0 * self.fieldReg['invCellDist'].u.data[boundary_east]*faceAreas_u[boundary_east]
+            nodeFluxes = Interpolation.toStaggered(invCellWallDist_A, 'v')
+
+            self.a_p[boundary_east] += self.diffusionCoefficient*nodeFluxes
+            self.sourceField_c[boundary_east] += self.diffusionCoefficient*nodeFluxes*value
+            self.a_e[boundary_east] = 0
+
+    def updateSourceField(self):
+        faceAreas_v = self.mesh.calcFaceAreas(self.fc).v.data
+        gradP_v = Differentiation.grad_v(self.p.data, self.fieldReg)
+        self.sourceField_c[internal_v] = -gradP_v * faceAreas_v[internal_v]
+
+

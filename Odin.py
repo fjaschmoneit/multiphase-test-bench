@@ -32,23 +32,16 @@ def getKeyFromValue(dict,value):
 
 def defineBoundaryCondition(field, boundaryName, boundaryType, fieldReg, **kwargs):
     value = kwargs.get('value', None)
-
-    # fieldKey = getKeyFromValue(fieldReg, field)
-    # fieldReg[fieldKey]['boundaryConditions'][boundaryName] = (boundaryType, value)
     field.boundary[boundaryName] = (boundaryType, value)
-    #data = field.data
     if boundaryType == 'fixedValue':
-# #         if boundaryName == 'top':
-# #             field.govModel.depField.data[boundary_north].fill(value)
-# #         elif boundaryName == 'bottom':
-# #             field.govModel.depField.data[boundary_south].fill(value)
-# # #            field.data[boundary_south] = value
         if boundaryName == 'right':
-            #field.govModel.depField.data[boundary_east].fill(value)
             field.data[boundary_east] = value
         elif boundaryName == 'left':
-#            field.govModel.depField.data[boundary_west].fill(value)
             field.data[boundary_west] = value
+        elif boundaryName == 'top':
+            field.data[boundary_north] = value
+        elif boundaryName == 'bottom':
+            field.data[boundary_south] = value
 
 #
 # def setGoverningTransportModel(self, model):
@@ -69,10 +62,8 @@ def updateSource(field, value, mesh):
 
 
 def solve(field):
-    #print('solving ', field.govModel)
-
     field.govModel.updateFluxes()
-    # field.govModel.updateSourceField()
+    field.govModel.updateSourceField()     i have to ingnore this for the shear stress test. fix it
     # field.govModel.correctBCs()
     field.govModel.updateLinSystem()
     return field.govModel.solve()
@@ -85,8 +76,6 @@ class Simulation:
         self.fieldCreator = Fields.fieldCreator(self.mesh)
 
         self.mesh.defineReciprocalDistances(self.fieldCreator, self.fieldRegistry)
-        # this dict relates every field to its governing flowmodel
-        self._fieldFlowModelLink = {}
         self._eqSystem = LinearEquationSystems.linearSystem(self.mesh)
 
         for fieldName, transportModelName in flowmodels.items():

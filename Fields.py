@@ -1,10 +1,11 @@
 import numpy as np
 
+
 class fieldCreator:
 
     def __init__(self, mesh):
 
-        self._typeShapeDict = {
+        self.typeShapeDict = {
             'scalarCV'      : (mesh.cells_y, mesh.cells_x),
             'faces_u'       : (mesh.cells_y, mesh.cells_x + 1),
             'faces_v'       : (mesh.cells_y+1, mesh.cells_x),
@@ -31,7 +32,7 @@ class fieldCreator:
             return baseField.fromShape(shape, value, ghostSwitch, govModel)
         elif 'type' in kwargs:
             type = kwargs.get('type')
-            shape = self._typeShapeDict[type]
+            shape = self.typeShapeDict[type]
             value = kwargs.get('value', 0.0)
             ghostSwitch = kwargs.get('includeGhostNodes', False)
             govModel = kwargs.get('governingModel')
