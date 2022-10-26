@@ -17,8 +17,8 @@ class linearSystem:
         self.b = np.zeros((5,))
 
     def solve(self):
-        # print(np.fmin(self.A,10))
-        # print(np.fmin(self.b,10))
+        # print(self.A)
+        # print(self.b)
         x = np.linalg.solve(self.A, self.b)
         return np.reshape( x, self.shape )
 
@@ -73,55 +73,5 @@ class linearSystem:
 
         linLength = self.shape[0]*self.shape[1]
 
-        # make this also a funtion
         self.b = np.reshape(Sc.data, linLength)
         return a_p
-
-    #
-    # def updatePressure(self, P, Sc, Sp):
-    #     ### updates coefficient matrix and b vector from concatenated flux vectors
-    #
-    #     # implementation of differencing schemes here, currently only central difference
-    #     a_e = -(D.u.east - 0.5 * F.u.east)
-    #     a_w = -(D.u.west + 0.5 * F.u.west)
-    #     a_n = -(D.v.north - 0.5 * F.v.north)
-    #     a_s = -(D.v.south + 0.5 * F.v.south)
-    #
-    #     a_p = -(a_e + a_w + a_n + a_s - Sp.data)
-    #
-    #     self.set_e_coeffs(a_e)
-    #     self.set_w_coeffs(a_w)
-    #     self.set_s_coeffs(a_s)
-    #     self.set_n_coeffs(a_n)
-    #     self.set_p_coeffs(a_p)
-    #
-    #     linLength = self.shape[0] * self.shape[1]
-    #
-    #     # make this also a funtion
-    #     self.b = np.reshape(Sc.data, linLength)
-
-    # def updatePressureEq(self, P, Sc):
-    #     self.A.fill(0.0)
-    #     # self.b.fill(0.0)      this is coupled with my source vector S, causing problems
-    #
-    #     # implementation of differencing schemes here, currently only central difference
-    #     a_e = -P.u.east
-    #     a_w = -P.u.west
-    #     a_n = -P.v.north
-    #     a_s = -P.v.south
-    #
-    #     a_p = -(a_e + a_w + a_n + a_s)
-    #
-    #     self.shape = a_e.shape
-    #     linLength = self.shape[0] * self.shape[1]
-    #     a_e_serial = np.reshape(a_e, linLength)
-    #     a_w_serial = np.reshape(a_w, linLength)
-    #     a_n_serial = np.reshape(a_n, linLength)
-    #     a_s_serial = np.reshape(a_s, linLength)
-    #     a_p_serial = np.reshape(a_p, linLength)
-    #
-    #     self.b = np.reshape(Sc.data, linLength)
-    #
-    #     ny, nx = a_e.shape
-    #     self.A = np.diag(a_p_serial) + np.diag(a_e_serial[:-1], 1) + np.diag(a_w_serial[1:], -1) + np.diag(
-    #         a_s_serial[:-nx], nx) + np.diag(a_n_serial[nx:], -nx)

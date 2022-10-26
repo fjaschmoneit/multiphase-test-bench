@@ -59,7 +59,13 @@ class fieldCreator:
         lenY = mesh.lenY
 
         ax = plt.gca()
-        map = ax.imshow(cellField.data, cmap='hot', interpolation='nearest')
+
+        if isinstance(cellField, baseField):
+            fieldData = cellField.data
+        else:
+            fieldData = cellField
+
+        map = ax.imshow(fieldData, cmap='hot', interpolation='nearest')
 
         ax.set_xticks(np.linspace(-0.5, nbcellsX - 0.5, 5))
         ax.set_xticklabels(np.linspace(0, lenX, 5))
@@ -83,6 +89,7 @@ class baseField:
 
         self.govModel = governingModel
         self.data = data
+#        self.boundary = {}
         self.boundary = {}
 
     #------------------ constructors
@@ -94,6 +101,8 @@ class baseField:
     def fill(self, value):
         self.data[:,:] = value
 
+    def getShape(self):
+        return self.data.shape
 
 
 class fieldContainer:

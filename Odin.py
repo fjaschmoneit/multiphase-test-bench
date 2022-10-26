@@ -4,16 +4,27 @@ import Fields
 import TransportModels
 import PressureModels
 from fieldAccess import *
+import numpy as np
 
 class Geometry:
+
+    boundaries = {
+        'left': 'west',
+        'right': 'east',
+        'top': 'north',
+        'bottom': 'south'}
+
     def __init__(self, lengthX, lengthY):
         self.lenX = lengthX
         self.lenY = lengthY
-        self.boundaries = [('left', 'west'), ('right', 'east'), ('top', 'north'), ('bottom', 'south')]
         self.regions = ['internal']
 
     def getBoundaryNames(self):
         return self.boundaries
+
+    @ classmethod
+    def getCompDirectionFromName(cls, name):
+        return cls.boundaries[name]
 
 def createGeometry( typeName, kwargs ):
     if typeName == 'rectangle':
@@ -30,41 +41,48 @@ def getKeyFromValue(dict,value):
             return k
     print("error:\t{value} not fount in dictionary {dict}".format(**locals()))
 
-def defineBoundaryCondition(field, boundaryName, boundaryType, fieldReg, **kwargs):
-    value = kwargs.get('value', None)
-    field.boundary[boundaryName] = (boundaryType, value)
+def defineBoundaryCondition(field, boundaryName, **argDict):
+
+    # linking BC in transport model:
+    dir = Geometry.getCompDirectionFromName(boundaryName)
+    argDict['direction'] = dir
+    field.boundary[boundaryName] =  argDict
+
+    # setting initial values (only possible, when data is initialized)
+    (boundary_dir, boundary_nb1_dir) = fieldSlice( dir )
+    boundaryType = argDict.get('type')
     if boundaryType == 'fixedValue':
-        if boundaryName == 'right':
-            field.data[boundary_east] = value
-        elif boundaryName == 'left':
-            field.data[boundary_west] = value
-        elif boundaryName == 'top':
-            field.data[boundary_north] = value
-        elif boundaryName == 'bottom':
-            field.data[boundary_south] = value
+        # in scalar transport, setting face BC values on cell centres
+        field.data[boundary_dir] = argDict.get('value')
+    elif boundaryType == 'zeroGradient':
+        neighborField = field.data[boundary_nb1_dir]
+        if neighborField.size != 0:         # this could happen in 1D simulations
+            field.data[boundary_dir] = neighborField
 
-#
-# def setGoverningTransportModel(self, model):
-#     self._govModel = model
-#
-#
-# def getGoverningTransportModel(field, fieldReg):
-#     fieldKey = getKeyFromValue(fieldReg, field)
-#     return fieldReg[fieldKey]['governingModel']
-#     #return self._govModel
+def calcCollocatedVelocityField(u,v):
+    col_u = 0.5*(u[west] + u[east])
+    col_v = 0.5*(v[north] + v[south])
 
+    #return np.dstack((col_u,col_v))
+    return (col_u, col_v)
+
+def calcVelocityMagnitude( vel ):
+    #col_u, col_v = np.dsplit(vel, 2)
+    col_u = vel[0]
+    col_v = vel[1]
+    return np.sqrt( col_u**2 + col_v**2 )
+
+
+def listAvailableBoundaryModels(field):
+    return field.govModel.listAvailableBoundaryModels()
 
 # should directly change the b vector in the lin eq system
-def updateSource(field, value, mesh):
-    field.govModel.setSourceField(value * mesh.uniformSpacing)
-#    fieldReg[fieldname]['governingModel'].setSourceField(value * mesh._uniformSpacing)
-    # self._sourceField_c = self._fc.newField(type='scalarCV', value=value * self._mesh._uniformSpacing)
-
+def setConstSource(field, value, mesh):
+    field.govModel.setConstSourceField(  Fields.newDataField(field.getShape(), value*mesh.uniformSpacing ) )
 
 def solve(field):
     field.govModel.updateFluxes()
-    field.govModel.updateSourceField()     i have to ingnore this for the shear stress test. fix it
-    # field.govModel.correctBCs()
+    field.govModel.updateSourceField()
     field.govModel.updateLinSystem()
     return field.govModel.solve()
 
@@ -83,39 +101,21 @@ class Simulation:
 
             self.fieldRegistry[fieldName] = transportModelInstance.getDepField()
             self.fieldRegistry[fieldName].govModel = transportModelInstance
-            self.fieldRegistry[fieldName].boundary = { name[0] :None for name in self.geometry.boundaries }
-
-
-            # #= {
-            #     'field':transportModelInstance.getDepField(),
-            #     'governingModel': transportModelInstance,
-            #     'boundaryConditions':{ name[0] :None for name in self._geometry._boundaries }
-            # }
+#            self.fieldRegistry[fieldName].boundary = { name[0] :None for name in self.geometry.boundaries }
+            self.fieldRegistry[fieldName].boundary = { name :None for name in self.geometry.boundaries }
 
         for fieldName, fieldType in passiveFields.items():
             self.fieldRegistry[fieldName]= self.fieldCreator.newField(type=fieldType)
 
         fieldnames = self.fieldRegistry.keys()
         for fieldname in fieldnames:
-            govModel = self.fieldRegistry[fieldname].govModel
-            if govModel is not None:
-                govModel.linkOtherFields(self.fieldRegistry)
 
-            # if 'governingModel' in self._fieldRegistry[fieldname]:
-            #     govModel = self._fieldRegistry[fieldname]['governingModel']
-            #     govModel.linkOtherFields(self._fieldRegistry)
-        # for transportmodel in flowmodels.values():
-        #     transportmodel.linkOtherFields(self._fieldRegistry)
-
-
-
-    #--------- could also be external functions:
-
-    # def getFieldRegistry(self):
-    #     return self.fieldRegistry
+            if isinstance( self.fieldRegistry[fieldname], Fields.baseField):
+                govModel = self.fieldRegistry[fieldname].govModel
+                if govModel is not None:
+                    govModel.linkOtherFields(self.fieldRegistry)
 
     def display(self, field, mesh):
         fGov = self.fieldCreator
-        #fGov = self._fieldRegistrAy['governor']
-        fGov.drawField(field, mesh)     # should not be a field creator method
+        fGov.drawField(field, mesh)
 

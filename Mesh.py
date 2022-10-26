@@ -14,15 +14,18 @@ class cartesian2D():
         self.nbCells = self.cells_x*self.cells_y
 
 
-    def defineReciprocalDistances(self, fieldCreator, fieldReg):
+    def defineReciprocalDistances(self, fGov, fieldReg):
         ### sets recCellDist as a parameterFaceField with inverse cell distances between internal cells and face-cell distance at boundary
 
-        #fGov = fieldReg['governor']
-        rCellDist = Fields.fieldContainer(
-            u = fieldCreator.newField(type='faces_u', value=1.0/self.uniformSpacing ),
-            v = fieldCreator.newField(type='faces_v', value=1.0/self.uniformSpacing )
-        )
-        fieldReg['invCellDist'] = rCellDist
+        # #fGov = fieldReg['governor']
+        # rCellDist = Fields.fieldContainer(
+        #     u = fieldCreator.newField(type='faces_u', value=1.0/self.uniformSpacing ),
+        #     v = fieldCreator.newField(type='faces_v', value=1.0/self.uniformSpacing )
+        # )
+
+        f_u = Fields.newDataField( shape=fGov.typeShapeDict['faces_u'], value=1.0/self.uniformSpacing )
+        f_v = Fields.newDataField( shape=fGov.typeShapeDict['faces_v'], value=1.0/self.uniformSpacing )
+        fieldReg['invCellDist'] = (f_u, f_v)
 
 
     # def getCellVolumes(self):
@@ -32,11 +35,11 @@ class cartesian2D():
     #     return self._invCellDist
 
     def calcFaceAreas(self, fGov):
-        fa = Fields.fieldContainer(
-            u=fGov.newField(type='faces_u', value=1),
-            v = fGov.newField(type='faces_v', value=1)
-        )
-        return fa
+        # u=fGov.newField(type='faces_u', value=1),
+        # v = fGov.newField(type='faces_v', value=1)
+        f_u = Fields.newDataField( shape=fGov.typeShapeDict['faces_u'], value=1.0 )
+        f_v = Fields.newDataField( shape=fGov.typeShapeDict['faces_v'], value=1.0 )
+        return (f_u, f_v)
 
     def getStats(self):
         print( self.nbCells )

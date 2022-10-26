@@ -1,42 +1,143 @@
 from fieldAccess import*
+import Interpolation
+
 
 class scalarBC:
 
     @staticmethod
-    def derichlet(loc, value, transportInstance):
+#    def derichlet(direction, value, transportInstance):
+    def derichlet(transportInstance, **argDict):
+        direction = argDict.get('direction')
+        value = argDict.get('value')
 
-        if loc == 'left':
-            westFlux = transportInstance.a_w[boundary_west]
-            transportInstance.a_p[boundary_west] += 2*westFlux
-            transportInstance.sourceField_c[boundary_west] += 2*westFlux*value
-            transportInstance.a_w[boundary_west] = 0.0
+        (boundary_dir, boundary_nb1_dir) = fieldSlice(direction)
 
-        elif loc == 'right':
-            eastFlux = transportInstance.a_e[boundary_east]
-            transportInstance.a_p[boundary_east] += 2*eastFlux
-            transportInstance.sourceField_c[boundary_east] += 2*eastFlux*value
-            transportInstance.a_e[boundary_east] = 0.0
+        a_dir = transportInstance.getCoefficientsInDirection(direction)
+        a_p = transportInstance.getCentreMatrixCoeffs()
+        S_c = transportInstance.sourceField_c
 
-        elif loc == 'top':
-            northFlux = transportInstance.a_n[boundary_north]
-            transportInstance.a_p[boundary_north] += 2*northFlux
-            transportInstance.sourceField_c[boundary_north] += 2*northFlux*value
-            transportInstance.a_n[boundary_north] = 0.0
+        ghostflux = a_dir[boundary_dir]
+        a_p[boundary_dir] += 2.0*ghostflux
+        S_c[boundary_dir] += 2.0*ghostflux*value
+        a_dir[boundary_dir] = 0.0
 
-        elif loc == 'bottom':
-            southFlux = transportInstance.a_s[boundary_south]
-            transportInstance.a_p[boundary_south] += 2*southFlux
-            transportInstance.sourceField_c[boundary_south] += 2*southFlux*value
-            transportInstance.a_s[boundary_south] = 0.0
 
-    # why are convective fluxes not affected?
     @staticmethod
-    def vonNeumann(loc, transportInstance):
-        if loc == 'left':
-            transportInstance.a_w[boundary_west].fill(0)
-        elif loc == 'right':
-            transportInstance.a_e[boundary_east].fill(0)
-        elif loc == 'top':
-            transportInstance.a_n[boundary_north].fill(0)
-        elif loc == 'bottom':
-            transportInstance.a_s[boundary_south].fill(0)
+    def vonNeumann(transportInstance, **argDict):
+        direction = argDict.get('direction')
+
+        (boundary_dir, boundary_nb1_dir) = fieldSlice(direction)
+        a_dir = transportInstance.getCoefficientsInDirection(direction)
+        a_dir[boundary_dir] = 0.0
+
+
+class staggered_u:
+
+    @staticmethod
+    def vonNeumann(transportInstance, **argDict):
+        direction = argDict.get('direction')
+
+        (boundary_dir, boundary_nb1_dir) = fieldSlice(direction)
+        a_dir = transportInstance.getCoefficientsInDirection(direction)
+        # a_dir[boundary_dir] = 0.0
+
+        #not so good:
+        # a_opposite = self.getCoefficientsInDirection(opposite(direction))
+        # a_opposite[boundary_dir] = 1e20
+        a_dir[boundary_dir] = 0.0
+        #a_dir[boundary_dir] = self.a_p[boundary_dir]
+
+        #self.a_w[boundary_dir] = 1e20
+
+    @staticmethod
+    def derichlet(transportInstance, **argDict):
+        direction = argDict.get('direction')
+        value = argDict.get('value')
+
+        (boundary_dir, boundary_nb1_dir) = fieldSlice(direction)
+        a_dir = transportInstance.getCoefficientsInDirection(direction)
+        a_p = transportInstance.getCentreMatrixCoeffs()
+        S_c = transportInstance.sourceField_c
+
+        if direction == 'west' or direction == 'east':
+            a_p[boundary_dir] += 1e15
+            S_c[boundary_dir] += 1e15 * value
+            a_dir[boundary_dir] = 0.0
+
+        elif direction == 'north' or direction == 'south':
+
+            faceAreas_u, faceAreas_v = transportInstance.mesh.calcFaceAreas(transportInstance.fc)
+            rCellDist_u, rCellDist_v = transportInstance.fieldReg['invCellDist']
+
+            invCellWallDist_A = 2.0 * rCellDist_v[boundary_dir]*faceAreas_v[boundary_dir]
+            nodeFluxes = Interpolation.toStaggered(invCellWallDist_A, 'u')
+
+            a_p[boundary_dir] += transportInstance.diffusionCoefficient*nodeFluxes
+            S_c[boundary_dir] += transportInstance.diffusionCoefficient*nodeFluxes*value
+            a_dir[boundary_dir] = 0.0
+
+class staggered_v:
+
+    @staticmethod
+    def vonNeumann(transportInstance, **argDict):
+        direction = argDict.get('direction')
+
+        (boundary_dir, boundary_nb1_dir) = fieldSlice(direction)
+        a_dir = transportInstance.getCoefficientsInDirection(direction)
+        a_dir[boundary_dir] = 0.0
+
+    @staticmethod
+    def derichlet(transportInstance, **argDict):
+        direction = argDict.get('direction')
+        value = argDict.get('value')
+
+        (boundary_dir, boundary_nb1_dir) = fieldSlice(direction)
+        a_dir = transportInstance.getCoefficientsInDirection(direction)
+        a_p = transportInstance.getCentreMatrixCoeffs()
+        S_c = transportInstance.sourceField_c
+
+        if direction == 'north' or direction == 'south':
+            a_p[boundary_dir] += 1e15
+            S_c[boundary_dir] += 1e15 * value
+            a_dir[boundary_dir] = 0.0
+
+        elif direction == 'east' or direction == 'west':
+
+            faceAreas_u, faceAreas_v = transportInstance.mesh.calcFaceAreas(transportInstance.fc)
+            rCellDist_u, rCellDist_v = transportInstance.fieldReg['invCellDist']
+
+            invCellWallDist_A = 2.0 * rCellDist_u[boundary_dir] * faceAreas_u[boundary_dir]
+            nodeFluxes = Interpolation.toStaggered(invCellWallDist_A, 'v')
+
+            a_p[boundary_dir] += transportInstance.diffusionCoefficient * nodeFluxes
+            S_c[boundary_dir] += transportInstance.diffusionCoefficient * nodeFluxes * value
+            a_dir[boundary_dir] = 0.0
+
+class pressure:
+
+    @staticmethod
+    def freeFlow(transportInstance, **argDict):
+        direction = argDict.get('direction')
+
+        (boundary_dir, boundary_nb1_dir) = fieldSlice(direction)
+        a_dir = transportInstance.getCoefficientsInDirection(direction)
+        a_dir[boundary_dir] = 0.0
+
+    @staticmethod
+    def totalPressure(transportInstance, **argDict):
+        pass
+
+    @staticmethod
+    def derichlet(transportInstance, **argDict):
+        direction = argDict.get('direction')
+        value = argDict.get('value')
+
+        (boundary_dir, boundary_nb1_dir) = fieldSlice(direction)
+        a_dir = transportInstance.getCoefficientsInDirection(direction)
+        a_p = transportInstance.getCentreMatrixCoeffs()
+        S_c = transportInstance.sourceField_c
+
+        a_p[boundary_dir] += 1e20
+        S_c[boundary_dir] += 1e20 * value
+        a_dir[boundary_dir] = 0.0
+

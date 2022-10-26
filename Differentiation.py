@@ -2,12 +2,14 @@ from fieldAccess import *
 
 
 def grad_u(field, fieldReg):
-    rCellDist_u = fieldReg['invCellDist'].u.data  # a faceField
+    rCellDist_u, rCellDist_v = fieldReg['invCellDist']
+    #rCellDist_u = fieldReg['invCellDist'].u.data  # a faceField
     return (field[east] - field[west])*rCellDist_u[internal_u]
 
 
 def grad_v(field, fieldReg):
-    rCellDist_v = fieldReg['invCellDist'].v.data  # a faceField
+    rCellDist_u, rCellDist_v = fieldReg['invCellDist']
+#    rCellDist_v = fieldReg['invCellDist'].v.data  # a faceField
     return (field[north] - field[south])*rCellDist_v[internal_v]
 
 
