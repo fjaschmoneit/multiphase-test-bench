@@ -1,16 +1,11 @@
-import numpy as np
-from fieldAccess import *
-import Interpolation
-import Fields
+
+def printArgs(*args):
+
+    for a in args:
+        print(a)
 
 
+b = 2
+c = 4
 
-dict = {
-    'a':1,
-    'b':2,
-    'c':3
-}
-
-del dict['a']
-
-print(dict)
+printArgs(*locals())

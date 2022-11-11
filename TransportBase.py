@@ -2,43 +2,45 @@ import Fields
 import DifferenceSchemes
 from fieldAccess import *
 import numpy as np
-
+import MeshConfig
 
 class transportBase:
 
-    def __init__(self, mesh, fieldCreator, fieldReg, linSystem, depFieldShape):
+    def __init__(self, mesh, field, linSystem, depFieldShape):
         self.mesh = mesh
         self.linSystem = linSystem
-        self.fieldReg = fieldReg
-        self.fc = fieldCreator
         self.depFieldShape = depFieldShape
         self.constSourceField = None
+        self.boundary = {}
+        self.depField = field
 
-        self.depField = self.fc.newField(shape=self.depFieldShape, value=0.0)  # why is this not a simple data field?
-        self.constSourceField = Fields.newDataField(shape=self.depFieldShape, value=0.0)
-        self.sourceField_c = Fields.newDataField(shape=self.depFieldShape, value=0.0)
-        self.a_e = Fields.newDataField(shape=self.depFieldShape, value=0.0)
-        self.a_w = Fields.newDataField(shape=self.depFieldShape, value=0.0)
-        self.a_s = Fields.newDataField(shape=self.depFieldShape, value=0.0)
-        self.a_n = Fields.newDataField(shape=self.depFieldShape, value=0.0)
-        self.a_p = Fields.newDataField(shape=self.depFieldShape, value=0.0)
+        self.constSourceField = Fields.newDataField(shape=MeshConfig.SHAPE_SCALAR_CV, value=0.0)
+        self.sourceField_c = Fields.newDataField(shape=MeshConfig.SHAPE_SCALAR_CV, value=0.0)
+        self.a_e = Fields.newDataField(shape=MeshConfig.SHAPE_SCALAR_CV)
+        self.a_w = Fields.newDataField(shape=MeshConfig.SHAPE_SCALAR_CV)
+        self.a_s = Fields.newDataField(shape=MeshConfig.SHAPE_SCALAR_CV)
+        self.a_n = Fields.newDataField(shape=MeshConfig.SHAPE_SCALAR_CV)
+        self.a_p = Fields.newDataField(shape=MeshConfig.SHAPE_SCALAR_CV)
 
-    def updateFluxes(self):
-        self.reset()
+    def getField(self):
+        return self.depField
 
-        F_u, F_v = self.calcConvFlux()
-        D_u, D_v = self.calcDiffFlux()
-
-        self.a_w[east] = DifferenceSchemes.centralDifference(D_u, F_u, 'west' )[internal_u]
-        self.a_e[west] = DifferenceSchemes.centralDifference(D_u, F_u, 'east')[internal_u]
-
-        self.a_n = DifferenceSchemes.centralDifference(D_v, F_v, 'north')[north]
-        self.a_s = DifferenceSchemes.centralDifference(D_v, F_v, 'south')[south]
-
-        self.correctBCs()
-
-        self.a_p += self.a_w + self.a_e + self.a_s + self.a_n
-    # self.a_p[internal_u] += F_u[east] - F_u[west] + F_v[south] - F_v[north]    # do I need to include these terms when u itself is transported?
+    # def updateFluxes(self):
+    #     self.reset()
+    #
+    #     F_u, F_v = self.calcConvFlux()
+    #     D_u, D_v = self.calcDiffFlux()
+    #
+    #     self.a_w[east] = DifferenceSchemes.centralDifference(D_u, F_u, 'west' )[internal_u]
+    #     self.a_e[west] = DifferenceSchemes.centralDifference(D_u, F_u, 'east')[internal_u]
+    #
+    #     self.a_n = DifferenceSchemes.centralDifference(D_v, F_v, 'north')[north]
+    #     self.a_s = DifferenceSchemes.centralDifference(D_v, F_v, 'south')[south]
+    #
+    #     self.correctBCs()
+    #
+    #     self.a_p += self.a_w + self.a_e + self.a_s + self.a_n
+    # # self.a_p[internal_u] += F_u[east] - F_u[west] + F_v[south] - F_v[north]    # do I need to include these terms when u itself is transported?
 
     def reset(self):
         self.linSystem.reset(shape=self.depFieldShape)
@@ -49,8 +51,8 @@ class transportBase:
         self.a_n.fill(0.0)
         self.a_p.fill(0.0)
 
-    def setConstSourceField(self, field):
-        self.constSourceField = field
+    def setConstSourceField(self, value):
+        self.constSourceField.fill(value)
 
     def setDiffusionCoefficient(self, value):
         self.diffusionCoefficient = value
@@ -59,22 +61,30 @@ class transportBase:
         return self.a_p
 
     def getCoefficientsInDirection(self,direction):
-        if direction == 'west':
-            return self.a_w
-        elif direction == 'east':
-            return self.a_e
-        elif direction == 'north':
-            return self.a_n
-        elif direction == 'south':
-            return self.a_s
+        directionCoeffDict = {
+            'west' : self.a_w,
+            'east': self.a_e,
+            'north': self.a_n,
+            'south': self.a_s
+        }
+        return directionCoeffDict[direction]
 
-    def getDepField(self):
-        return self.depField
+    def getCoefficientsInOppositeDirection(self, direction):
+        oppositeDirectionCoeffDict = {
+            'west': self.a_e,
+            'east': self.a_w,
+            'north': self.a_s,
+            'south': self.a_n
+        }
+        return oppositeDirectionCoeffDict[direction]
+    # def getDepField(self):
+    #     return self.depField
 
     def correctBCs(self):
-        for argDict in self.depField.boundary.values():
+        for argDict in self.boundary.values():
             bcType = argDict['type']
             self.boundaryModels[bcType](self, **argDict)
+#            self.boundaryModels[bcType](self.depField.data, **argDict)
 
     def updateLinSystem(self):
         self.linSystem.reset(shape=self.depFieldShape)

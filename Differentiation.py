@@ -1,15 +1,13 @@
 from fieldAccess import *
 
 
-def grad_u(field, fieldReg):
-    rCellDist_u, rCellDist_v = fieldReg['invCellDist']
-    #rCellDist_u = fieldReg['invCellDist'].u.data  # a faceField
+def grad_u(field, mesh):
+    rCellDist_u = mesh.calcInvCellDistance('west')
     return (field[east] - field[west])*rCellDist_u[internal_u]
 
 
-def grad_v(field, fieldReg):
-    rCellDist_u, rCellDist_v = fieldReg['invCellDist']
-#    rCellDist_v = fieldReg['invCellDist'].v.data  # a faceField
+def grad_v(field, mesh):
+    rCellDist_v = mesh.calcInvCellDistance('north')
     return (field[north] - field[south])*rCellDist_v[internal_v]
 
 

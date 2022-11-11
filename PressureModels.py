@@ -1,26 +1,80 @@
 import BoundaryConditions
-import TransportBase
+import Fields
 from fieldAccess import *
+import MeshConfig
+import ObjectRegistry as objReg
 
-class Pressure(TransportBase.transportBase):
+class Pressure():
 
-    def __init__(self, mesh, fieldCreator, fieldReg, linSystem):
-        self.depFieldShape = fieldCreator.typeShapeDict['scalarCV']
-        super().__init__(mesh, fieldCreator, fieldReg, linSystem, self.depFieldShape)
-        self.p = self.depField
+    def __init__(self, mesh, linSystem):
+        self.p = Fields.newField(shape=MeshConfig.SHAPE_SCALAR_CV, governingModel=self, value=0)
+        self.depField = self.p
 
+        self.pcorr = Fields.newDataField(shape=MeshConfig.SHAPE_SCALAR_CV_GHOST, value=0)
+        objReg.FIELDS['pcorr'] = self.pcorr
+
+
+        self.mesh = mesh
+        self.depFieldShape = MeshConfig.SHAPE_SCALAR_CV
+        self.sourceField_c = Fields.newDataField(shape=self.depFieldShape, value=0.0)
+        self.a_e = Fields.newDataField(shape=self.depFieldShape, value=0.0)
+        self.a_w = Fields.newDataField(shape=self.depFieldShape, value=0.0)
+        self.a_s = Fields.newDataField(shape=self.depFieldShape, value=0.0)
+        self.a_n = Fields.newDataField(shape=self.depFieldShape, value=0.0)
+        self.a_p = Fields.newDataField(shape=self.depFieldShape, value=0.0)
+        self.linSystem = linSystem
+
+        # pointers to corresp. boundary functions:
         self.boundaryModels = {
             'freeFlow' : BoundaryConditions.pressure.freeFlow,
             'totalPressure' : BoundaryConditions.pressure.totalPressure,
             'constantPressure' : BoundaryConditions.pressure.derichlet
         }
 
-    def linkOtherFields(self, fieldReg):
-        self.u = fieldReg['u']
-        self.v = fieldReg['v']
+    def getCentreMatrixCoeffs(self):
+        return self.a_p
+
+    def updateLinSystem(self):
+        self.linSystem.reset(shape=self.depFieldShape)
+        self.linSystem.set_e_coeffs(self.a_e)
+        self.linSystem.set_w_coeffs(self.a_w)
+        self.linSystem.set_n_coeffs(self.a_n)
+        self.linSystem.set_s_coeffs(self.a_s)
+        self.linSystem.set_p_coeffs(self.a_p)
+        self.linSystem.set_b(self.sourceField_c)
+
+    def getCoefficientsInDirection(self,direction):
+        directionCoeffDict = {
+            'west' : self.a_w,
+            'east': self.a_e,
+            'north': self.a_n,
+            'south': self.a_s
+        }
+        return directionCoeffDict[direction]
+
+    def correctBCs(self):
+        for argDict in self.depField.boundary.values():
+            bcType = argDict['type']
+            self.boundaryModels[bcType](self, **argDict)
+
+    def getField(self):
+        return self.p
+
+    def linkOtherFields(self):
+        self.u = objReg.FIELDS['u']
+        self.v = objReg.FIELDS['v']
 
     def solve(self):
         return self.linSystem.solve()
+
+    def reset(self):
+        self.linSystem.reset(shape=self.depFieldShape)
+        self.sourceField_c.fill(0.0)
+        self.a_e.fill(0.0)
+        self.a_w.fill(0.0)
+        self.a_s.fill(0.0)
+        self.a_n.fill(0.0)
+        self.a_p.fill(0.0)
 
     def updateFluxes(self):
         self.reset()
@@ -28,7 +82,7 @@ class Pressure(TransportBase.transportBase):
         transModel_u = self.u.govModel
         transModel_v = self.v.govModel
 
-        faceAreas_u, faceAreas_v = self.mesh.calcFaceAreas(self.fc)
+        faceAreas_u, faceAreas_v = self.mesh.calcFaceAreas()
 
         centreCoeffs_u = transModel_u.getCentreMatrixCoeffs()
         centreCoeffs_v = transModel_v.getCentreMatrixCoeffs()
@@ -46,7 +100,7 @@ class Pressure(TransportBase.transportBase):
         self.a_p += self.a_w + self.a_e + self.a_s + self.a_n
 
     def updateSourceField(self):
-        faceAreas_u, faceAreas_v = self.mesh.calcFaceAreas(self.fc)
+        faceAreas_u, faceAreas_v = self.mesh.calcFaceAreas()
 
         u = self.u.data
         v = self.v.data
