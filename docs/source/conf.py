@@ -2,9 +2,9 @@
 
 # -- Project information
 
-project = 'Lumache'
-copyright = '2021, Graziella'
-author = 'Graziella'
+project = 'Multiphase Test-Bench'
+copyright = '2022, Aschmoneit'
+author = 'Fynn Aschmoneit'
 
 release = '0.1'
 version = '0.1.0'
