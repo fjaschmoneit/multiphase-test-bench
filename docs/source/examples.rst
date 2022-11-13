@@ -1,7 +1,8 @@
 Examples
 ========
 
-.. autosummary::
+..
+    autosummary::
    :toctree: generated
 
    MTB
