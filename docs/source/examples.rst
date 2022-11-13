@@ -1,1 +1,7 @@
-moin moin
+Examples
+===
+
+.. autosummary::
+   :toctree: generated
+
+   MTB
