@@ -20,7 +20,6 @@ width: 675px
 align: center
 ---
 
-```
 
 The **Multiphase Test-Bench (MTB)** is an open source CFD framework for multiphase problems.
 It provides a simple and intuitive :doc:'api'.
