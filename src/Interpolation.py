@@ -12,13 +12,13 @@ from fieldAccess import*
 def toStaggered(field, direction):
     (ny, nx) = field.shape
     if direction == 'u':
-        intplField = Fields.newDataField((ny,nx+1))
+        intplField = Fields.newDataField((ny, nx + 1))
         intplField[east] = field
         intplField[west] += field
         #intplField[internal_u] *= 0.5
         intplField *= 0.5
     elif direction == 'v':
-        intplField = Fields.newDataField((ny+1,nx))
+        intplField = Fields.newDataField((ny + 1, nx))
         intplField[south] = field
         intplField[north] += field
         #intplField[internal_u] *= 0.5

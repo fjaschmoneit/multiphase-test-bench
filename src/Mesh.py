@@ -26,7 +26,7 @@ class cartesian2D():
     def calcInvCellDistance(self,direction):
         rDist = 1.0/self.uniformSpacing
         if direction == 'east' or direction == 'west':
-            return Fields.newDataField( shape=MeshConfig.SHAPE_FACES_U, value=rDist )
+            return Fields.newDataField(shape=MeshConfig.SHAPE_FACES_U, value=rDist)
         elif direction == 'north' or direction == 'south':
             return Fields.newDataField(shape=MeshConfig.SHAPE_FACES_V, value=rDist)
 
@@ -43,7 +43,7 @@ class cartesian2D():
         constArea = self.uniformSpacing**2
 #        constArea = 1
         if direction == 'east' or direction == 'west':
-            return Fields.newDataField( shape=MeshConfig.SHAPE_FACES_U, value=constArea )
+            return Fields.newDataField(shape=MeshConfig.SHAPE_FACES_U, value=constArea)
         elif direction == 'north' or direction == 'south':
             return Fields.newDataField(shape=MeshConfig.SHAPE_FACES_V, value=constArea)
 

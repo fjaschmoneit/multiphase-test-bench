@@ -1,6 +1,4 @@
 import Fields
-import DifferenceSchemes
-from fieldAccess import *
 import numpy as np
 import MeshConfig
 

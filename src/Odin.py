@@ -2,8 +2,6 @@ import LinearEquationSystems
 import Mesh
 import Fields
 import MeshConfig
-import TransportModels
-import PressureModels
 from fieldAccess import *
 import numpy as np
 import ObjectRegistry as objReg
@@ -128,7 +126,7 @@ def initialize(flowmodels, mesh, geometry, passiveFields={}):
     # linking fields between flow models:
     fieldnames = objReg.FIELDS.keys()
     for fieldname in fieldnames:
-        if isinstance( objReg.FIELDS[fieldname], Fields.baseField):
+        if isinstance(objReg.FIELDS[fieldname], Fields.baseField):
             govModel = objReg.FIELDS[fieldname].govModel
             if govModel is not None:
                 govModel.linkOtherFields()

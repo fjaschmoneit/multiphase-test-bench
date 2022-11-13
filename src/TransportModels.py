@@ -62,7 +62,7 @@ class scalarTransport(TransportBase.transportBase):
         F_u, F_v = self.calcConvFlux()
         D_u, D_v = self.calcDiffFlux()
 
-        self.a_w = DifferenceSchemes.centralDifference( D_u[west], F_u[west], 'west' )
+        self.a_w = DifferenceSchemes.centralDifference(D_u[west], F_u[west], 'west')
         self.a_e = DifferenceSchemes.centralDifference(D_u[east], F_u[east], 'east')
         self.a_n = DifferenceSchemes.centralDifference(D_v[north], F_v[north], 'north')
         self.a_s = DifferenceSchemes.centralDifference(D_v[south], F_v[south], 'south')
