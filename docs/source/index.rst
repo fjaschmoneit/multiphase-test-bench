@@ -1,17 +1,6 @@
 Multiphase Test-Bench - A slim CFD framework for multiphase flows
 =================================================================
 
-..
-    Moin Moin!
-
-    **Lumache** (/lu'make/) is a Python library for cooks and food lovers
-    that creates recipes mixing random ingredients.
-    It pulls data from the `Open Food Facts database <https://world.openfoodfacts.org/>`_
-    and offers a *simple* and *intuitive* API.
-
-    Check out the :doc:`usage` section for further information, including
-    how to :ref:`installation` the project.
-
 .. note::
 
    This project is under active development.
@@ -31,32 +20,37 @@ width: 675px
 align: center
 ---
 ```
-**poliastro** is an open source ([MIT](https://opensource.org/licenses/MIT)) pure Python library
-for interactive Astrodynamics and Orbital Mechanics,
-with a focus on ease of use, speed, and quick visualization.
-It provides a simple and intuitive {ref}`API <api-reference>`,
-and handles physical quantities with units.
+The **Multiphase Test-Bench (MTB)** is an open source CFD framework for multiphase problems.
+It provides a simple and intuitive {ref}`api`, and handles physical quantities with units.
 
-View the [source code](https://github.com/poliastro/poliastro) of poliastro!
 
-Some of its awesome features are:
 
-- Analytical and numerical orbit propagation
-- Conversion between position and velocity vectors and classical
-  orbital elements
-- Coordinate frame transformations
-- Hohmann and bielliptic maneuvers computation
-- Trajectory plotting
-- Initial orbit determination (Lambert problem)
-- Planetary ephemerides (using [SPICE kernels](https://naif.jpl.nasa.gov/naif/data.html) via [Astropy](https://www.astropy.org/))
-- Computation of Near-Earth Objects (NEOs)
+..
+    is an open source ([MIT](https://opensource.org/licenses/MIT)) pure Python library
+    for interactive Astrodynamics and Orbital Mechanics,
+    with a focus on ease of use, speed, and quick visualization.
 
-And more to come!
 
-poliastro is developed by an open, international community. Release
-announcements and general discussion take place on our [mailing
-list](https://groups.io/g/poliastro-dev) and
-[chat](http://chat.poliastro.space/).
+    View the [source code](https://github.com/poliastro/poliastro) of poliastro!
+
+    Some of its awesome features are:
+
+    - Analytical and numerical orbit propagation
+    - Conversion between position and velocity vectors and classical
+      orbital elements
+    - Coordinate frame transformations
+    - Hohmann and bielliptic maneuvers computation
+    - Trajectory plotting
+    - Initial orbit determination (Lambert problem)
+    - Planetary ephemerides (using [SPICE kernels](https://naif.jpl.nasa.gov/naif/data.html) via [Astropy](https://www.astropy.org/))
+    - Computation of Near-Earth Objects (NEOs)
+
+    And more to come!
+
+    poliastro is developed by an open, international community. Release
+    announcements and general discussion take place on our [mailing
+    list](https://groups.io/g/poliastro-dev) and
+    [chat](http://chat.poliastro.space/).
 
 ..
     ```{eval-rst}
