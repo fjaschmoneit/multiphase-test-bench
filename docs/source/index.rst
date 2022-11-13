@@ -18,10 +18,11 @@ Contents
 --------
 
 .. toctree::
-   
-   usage
-   api
-   examples
+    usage
+    api
+    examples
+    installation
+
 
 ..
     ## Contents
