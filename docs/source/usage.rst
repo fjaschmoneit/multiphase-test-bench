@@ -13,16 +13,12 @@ This flexible simulation set up allows you to
 Workflow
 --------
 
-
 - :ref:`importMTB`
 - :ref:`defineGeomMesh`
-
-..
-    :ref:`selectModels`
-    :ref:`definePassiveFields`
-    :ref:`initializeSimInstance`
-    :ref:`defBCs`
-
+- :ref:`selectModels`
+- :ref:`definePassiveFields`
+- :ref:`initializeSimInstance`
+- :ref:`defBCs`
 
 
 
@@ -43,33 +39,40 @@ After the sources are downloaded you can access the MPTB with:
 
 
 .. _defineGeomMesh:
+
 Define the geometry and mesh
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
 .. _selectModels:
+
 Select your flow models
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 
 .. _definePassiveFields:
+
 Define passive fields
 ^^^^^^^^^^^^^^^^^^^^^
 
 
 .. _initializeSimInstance:
+
 Initialize the simulation instance
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. _defBCs:
+
 Define boundary conditions and initial field
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. _setTranspModelParams:
+
 Adjust transport models
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 .. _execSim:
+
 Execute the simulations
 ^^^^^^^^^^^^^^^^^^^^^^^
 
