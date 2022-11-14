@@ -56,8 +56,7 @@ and to create a mesh mesh from the geometry, simply write:
 
 You first create or import a geometry using the ``mptb.createGeometry`` function:
 
-    .. function:: Manager.createGeometry(shape, dimensions)
-            returns a geometry of shape with default names
+    .. autofunction:: Manager.createGeometry
 
 
 

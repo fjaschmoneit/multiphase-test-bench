@@ -29,6 +29,13 @@ class Geometry:
         return cls.boundaries[name]
 
 def createGeometry( typeName, kwargs ):
+    """
+    return a geometry object
+
+    :param typeName:
+    :param kwargs:
+    :return:
+    """
     if typeName == 'rectangle':
         return Geometry(*kwargs)
 
