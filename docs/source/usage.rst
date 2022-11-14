@@ -76,9 +76,9 @@ A simple heat transfer problem with only one variable could be set up like this:
 For a 2D incompressible flow problem, we could set up the flow model like this:
 
 >>> myFlowModels = {
->>>    'u' : Odin.TransportModels.staggeredTransport_u,
->>>    'v' : Odin.TransportModels.staggeredTransport_v,
->>>    'p' : Odin.PressureModels.Pressure
+>>>    'u' : mptb.TransportModels.staggeredTransport_u,
+>>>    'v' : mptb.TransportModels.staggeredTransport_v,
+>>>    'p' : mptb.PressureModels.Pressure
 >>> }
 
 Note that the different velocity components have a different transport model.
@@ -89,8 +89,21 @@ Note that the different velocity components have a different transport model.
 Define passive fields
 ^^^^^^^^^^^^^^^^^^^^^
 
+In some cases we would want to prescribe a constant passive field, without solving it.
+Depending on the chosen transport model, we have to provide neccessary fields here,
+if they don't appear in the flow model dictionary.
 
+For example, in a heat transfer problem the constant advection,
+we prescribe a passive velocity field, which affects the heat conduction:
 
+>>> passiveFields = {
+>>>    'u' : 'faces_u',
+>>>    'v' : 'faces_v'
+>>> }
+
+These fields are not solved by the CFD algorithm.
+Hence, they don't have boundary conditions.
+However, they can still be accessed or modified.
 
 .. _initializeSimInstance:
 
@@ -112,29 +125,4 @@ Adjust transport models
 Execute the simulations
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-
-
-
-
-
-..
-    Creating recipes
-    ----------------
-
-    To retrieve a list of random ingredients,
-    you can use the ``lumache.get_random_ingredients()`` function:
-
-    .. autofunction:: lumache.get_random_ingredients
-
-    The ``kind`` parameter should be either ``"meat"``, ``"fish"``,
-    or ``"veggies"``. Otherwise, :py:func:`lumache.get_random_ingredients`
-    will raise an exception.
-
-    .. autoexception:: lumache.InvalidKindError
-
-    For example:
-
-    >>> import lumache
-    >>> lumache.get_random_ingredients()
-    ['shells', 'gorgonzola', 'parsley']
 
