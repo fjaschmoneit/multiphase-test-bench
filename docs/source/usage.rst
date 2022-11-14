@@ -16,7 +16,7 @@ Workflow
 
 click here: :ref:`importMTB`
 
-click here:    :ref:`defineGeomMesh`
+click here: :ref:`defineGeomMesh`
 
 :ref:`selectModels`
 
