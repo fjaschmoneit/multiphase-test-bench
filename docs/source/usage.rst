@@ -55,9 +55,9 @@ and to create a mesh mesh from the geometry, simply write:
 >>> mesh = mptb.createMesh( geom, res=resolution )
 
 You first create or import a geometry
-    you can use the ``lumache.get_random_ingredients()`` function:
+    you can use the ``mptb.createGeometry`` function:
 
-    .. autofunction:: lumache.get_random_ingredients
+    .. autofunction:: manager.createGeometry
 
 
 

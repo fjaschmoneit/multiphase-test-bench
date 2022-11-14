@@ -21,6 +21,7 @@ Contents
     :caption: Get started
 
     installation
+    usage
     examples
 
 .. toctree::
@@ -28,46 +29,6 @@ Contents
 
     api
 
-
-..
-    ## Contents
-
-    ```{toctree}
-    ---
-    maxdepth: 2
-    caption: Tutorials
-    ---
-    installation
-    quickstart
-    ```
-
-    ```{toctree}
-    ---
-    maxdepth: 2
-    caption: How-to guides & Examples
-    ---
-    gallery
-    contributing
-    ```
-
-    ```{toctree}
-    ---
-    maxdepth: 2
-    caption: Reference
-    ---
-    api
-    bibliography
-    changelog
-    ```
-
-    ```{toctree}
-    ---
-    maxdepth: 2
-    caption: Background
-    ---
-    history
-    related
-    background
-    ```
-
+.. toctree::
+    :caption: Links
 
