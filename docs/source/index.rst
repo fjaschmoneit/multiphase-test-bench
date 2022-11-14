@@ -22,6 +22,8 @@ Contents
 
     usage
     examples
+
+.. toctree::
     :caption: User Documentation
 
     api
