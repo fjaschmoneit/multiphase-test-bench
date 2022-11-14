@@ -47,6 +47,6 @@ html_theme = 'sphinx_rtd_theme'
 # -- Options for EPUB output
 epub_show_urls = 'footnote'
 
-MOCK_MODULES = ['numpy']
+MOCK_MODULES = ['numpy', 'scipy']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
