@@ -67,22 +67,29 @@ Here you define a name for every variable and link it to a flow model type.
 Neither the fields, nor the flow models are initialized here.
 They will be brought together with the mesh in the intialize step (see below).
 
-For example, for a 2D incompressible flow problem, we could set up the flow model like this:
+A simple heat transfer problem with only one variable could be set up like this:
 
->>>myFlowModels = {
+>>> myFlowModels = {
+>>>    'T' : mptb.TransportModels.scalarTransport
+>>> }
+
+For a 2D incompressible flow problem, we could set up the flow model like this:
+
+>>> myFlowModels = {
 >>>    'u' : Odin.TransportModels.staggeredTransport_u,
 >>>    'v' : Odin.TransportModels.staggeredTransport_v,
 >>>    'p' : Odin.PressureModels.Pressure
->>>}
+>>> }
 
 Note that the different velocity components have a different transport model.
-
 
 
 .. _definePassiveFields:
 
 Define passive fields
 ^^^^^^^^^^^^^^^^^^^^^
+
+
 
 
 .. _initializeSimInstance:
