@@ -3,7 +3,7 @@ import Mesh
 import Fields
 import MeshConfig
 from fieldAccess import *
-#import numpy as np
+import numpy as np
 import ObjectRegistry as objReg
 import TransportModels
 
