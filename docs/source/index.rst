@@ -19,8 +19,12 @@ Contents
 
 .. toctree::
     usage
-    api
     examples
+    .. toctree::
+       :maxdepth: 2
+       :caption: User Documentation # <-- This is what I was looking for
+            api
+            api
     installation
 
 
