@@ -3,7 +3,7 @@ High-Level API
 
     .. autofunction:: Manager.createGeometry
 
-    .. autofunction:: Manager.defineBoundaryConditions
+    .. autofunction:: Manager.defineBoundaryCondition
 
 
 

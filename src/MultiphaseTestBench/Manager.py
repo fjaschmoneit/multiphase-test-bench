@@ -30,16 +30,24 @@ class Geometry:
 
 def createGeometry( typeName, kwargs ):
     """
-    return a geometry object
+    creating a geometry object
 
-    :param typeName:
-    :param kwargs:
-    :return:
+    :param typeName: ['rectangle']
+    :param kwargs: see Geometry constructor arguments
+    :return: Geometry object
     """
     if typeName == 'rectangle':
         return Geometry(*kwargs)
 
 def createMesh(Geometry, res):
+    """
+    creating a mesh from a geometry with specified resolution
+
+    :param Geometry: geometry object
+    :param res: integer [cells per meter]
+    :return: Mesh object
+    """
+
     len_x = Geometry.lenX
     len_y = Geometry.lenY
     return Mesh.cartesian2D(len_x = len_x, len_y= len_y, res=res)
