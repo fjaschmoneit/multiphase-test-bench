@@ -31,9 +31,14 @@ Workflow
 Import the Multiphase Test-Bench
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+This project is not available as a pip package.
+After the sources are downloaded you can access the MPTB with:
+
 >>> import sys
 >>> sys.path.append("PATH_TO_SOURCE/MultiphaseTestBench")
->>> import manager an mptb
+>>> import Manager an mptb
+
+
 
 
 .. _defineGeomMesh:
