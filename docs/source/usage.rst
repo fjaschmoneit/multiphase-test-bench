@@ -2,17 +2,28 @@ Usage
 =====
 
 
+Flow models are developed and executed through Python script.
+The workflow below indicates the neccessary steps for the simulation set-up and execution.
+A simulation instance can be defined within a single script, see for example VALIDATION test,
+or distributed across several scripts, as for example in APPLICATION.
+This flexible simulation set up allows you to
+
+
+
 Workflow
 --------
 
 :ref:`importMTB`
+
 :ref:`defineGeomMesh`
+
 :ref:`selectModels`
+
 :ref:`definePassiveFields`
+
 :ref:`initializeSimInstance`
+
 :ref:`defBCs`
-
-
 
 
 
@@ -47,7 +58,13 @@ Initialize the simulation instance
 Define boundary conditions and initial field
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+.. _setTranspModelParams:
+Adjust transport models
+^^^^^^^^^^^^^^^^^^^^^^^
 
+.. _execSim:
+Execute the simulations
+^^^^^^^^^^^^^^^^^^^^^^^
 
 
 
