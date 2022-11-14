@@ -22,7 +22,6 @@ class cartesian2D():
         MeshConfig.SHAPE_VERTEX =               (self.cells_y + 1, self.cells_x + 1)
 
 
-
     def calcInvCellDistance(self,direction):
         rDist = 1.0/self.uniformSpacing
         if direction == 'east' or direction == 'west':

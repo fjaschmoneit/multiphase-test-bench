@@ -30,14 +30,13 @@ Workflow
 Import the Multiphase Test-Bench
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This project is not available as a pip package.
+The simulation is conducted from a global Manager.
+For a high-level application of the test-bench, it is sufficient to only import the Manager.
 After the sources are downloaded you can access the MPTB with:
 
 >>> import sys
 >>> sys.path.append("PATH_TO_SOURCE/MultiphaseTestBench")
 >>> import Manager an mptb
-
-
 
 
 .. _defineGeomMesh:
@@ -46,7 +45,8 @@ Define the geometry and mesh
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The simulation instance needs both, a geometry object, and a mesh object.
-
+The geometry holds information on the dimension, the boundary names and possible regions.
+The mesh is contains information about the discretization and fundamental mesh operations.
 
 For example, to generate a rectangular 2D geometry with default boundary names,
 and to create a mesh mesh from the geometry, simply write:
@@ -54,15 +54,29 @@ and to create a mesh mesh from the geometry, simply write:
 >>> geom = mptb.createGeometry( 'rectangle', [0.4, 0.3] )
 >>> mesh = mptb.createMesh( geom, res=resolution )
 
-You first create or import a geometry using the  :py:func:`Manager.createGeometry` function:
-
-
+See :py:func:`Manager.createGeometry` and :py:func:'Manager.createMech' for details.
 
 
 .. _selectModels:
 
 Select your flow models
 ^^^^^^^^^^^^^^^^^^^^^^^
+
+Every flow variable is governed by its flow model.
+Here you define a name for every variable and link it to a flow model type.
+Neither the fields, nor the flow models are initialized here.
+They will be brought together with the mesh in the intialize step (see below).
+
+For example, for a 2D incompressible flow problem, we could set up the flow model like this:
+
+>>>myFlowModels = {
+>>>    'u' : Odin.TransportModels.staggeredTransport_u,
+>>>    'v' : Odin.TransportModels.staggeredTransport_v,
+>>>    'p' : Odin.PressureModels.Pressure
+>>>}
+
+Note that the different velocity components have a different transport model.
+
 
 
 .. _definePassiveFields:

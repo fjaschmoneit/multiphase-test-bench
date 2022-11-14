@@ -102,6 +102,7 @@ def calcCollocatedVelocityField(u,v):
 def calcVelocityMagnitude( vel ):
     """
     Calculates the velocity magnitude.
+
     :param vel: collocated velocity field
     :return: cellField with velocity magnitudes
     """
@@ -164,7 +165,8 @@ def solve(field):
 
 def getField(name):
     """
-    retirve a field reference from object registry
+    retrieve a field reference from object registry
+
     :param name: field name
     :return: reference to field object
     """
@@ -214,6 +216,7 @@ def initialize(flowmodels, mesh, geometry, passiveFields={}):
 def display(field, mesh):
     """
     Rudimental visual data analysis tool. Fields are plotted using matplotlib.
+
     :param field: field name
     :param mesh: mesh object
     :return: None
