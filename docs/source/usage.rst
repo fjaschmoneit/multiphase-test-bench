@@ -14,17 +14,14 @@ Workflow
 --------
 
 
-click here: :ref:`importMTB`
+:ref:`importMTB`
 
-click here: :ref:`defineGeomMesh`
-
-:ref:`selectModels`
-
-:ref:`definePassiveFields`
-
-:ref:`initializeSimInstance`
-
-:ref:`defBCs`
+..
+    :ref:`defineGeomMesh`
+    :ref:`selectModels`
+    :ref:`definePassiveFields`
+    :ref:`initializeSimInstance`
+    :ref:`defBCs`
 
 
 
@@ -34,6 +31,9 @@ click here: :ref:`defineGeomMesh`
 Import the Multiphase Test-Bench
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+>>> import sys
+>>> sys.path.append("PATH_TO_SOURCE/MultiphaseTestBench")
+>>> import manager an mptb
 
 
 .. _defineGeomMesh:
