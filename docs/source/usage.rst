@@ -14,10 +14,10 @@ Workflow
 --------
 
 
-:ref:`importMTB`
+- :ref:`importMTB`
+- :ref:`defineGeomMesh`
 
 ..
-    :ref:`defineGeomMesh`
     :ref:`selectModels`
     :ref:`definePassiveFields`
     :ref:`initializeSimInstance`
