@@ -45,6 +45,22 @@ After the sources are downloaded you can access the MPTB with:
 Define the geometry and mesh
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+The simulation instance needs both, a geometry object, and a mesh object.
+
+
+For example, to generate a rectangular 2D geometry with default boundary names,
+and to create a mesh mesh from the geometry, simply write:
+
+>>> geom = mptb.createGeometry( 'rectangle', [0.4, 0.3] )
+>>> mesh = mptb.createMesh( geom, res=resolution )
+
+You first create or import a geometry
+    you can use the ``lumache.get_random_ingredients()`` function:
+
+    .. autofunction:: lumache.get_random_ingredients
+
+
+
 
 .. _selectModels:
 

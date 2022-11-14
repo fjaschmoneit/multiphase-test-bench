@@ -1,6 +1,7 @@
 Installation
 ============
 
+:caption: Getting Started
 
 Latest development branch:
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -16,6 +17,10 @@ and follow :ref:`importMTB` to get started.
 
 
 Install the Multiphase Test-Bench using pip:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. note::
+    only irregularly updated
 
 .. code-block:: console
 
