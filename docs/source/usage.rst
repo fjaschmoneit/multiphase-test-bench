@@ -13,9 +13,10 @@ This flexible simulation set up allows you to
 Workflow
 --------
 
-.. :toctree::
-    :ref:`importMTB`
-    :ref:`defineGeomMesh`
+
+click here: :ref:`importMTB`
+
+click here:    :ref:`defineGeomMesh`
 
 :ref:`selectModels`
 
