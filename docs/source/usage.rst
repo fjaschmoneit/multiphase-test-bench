@@ -54,10 +54,9 @@ and to create a mesh mesh from the geometry, simply write:
 >>> geom = mptb.createGeometry( 'rectangle', [0.4, 0.3] )
 >>> mesh = mptb.createMesh( geom, res=resolution )
 
-You first create or import a geometry
-    you can use the ``mptb.createGeometry`` function:
+You first create or import a geometry using the ``mptb.createGeometry`` function:
 
-    .. autofunction:: manager.createGeometry
+    .. autofunction:: Manager.createGeometry
 
 
 
