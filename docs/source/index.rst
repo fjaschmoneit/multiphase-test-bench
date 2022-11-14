@@ -18,9 +18,13 @@ Contents
 --------
 
 .. toctree::
+    :caption: 1.2
+
     usage
     examples
-   :caption: User Documentation
+
+    :caption: User Documentation
+
     api
     installation
 
