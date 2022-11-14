@@ -51,7 +51,13 @@ def getKeyFromValue(dict,value):
     print("error:\t{value} not fount in dictionary {dict}".format(**locals()))
 
 def defineBoundaryCondition(field, boundaryName, **argDict):
+    """
 
+    :param field:
+    :param boundaryName:
+    :param argDict:
+    :return: None
+    """
     # linking BC in transport model:
     dir = Geometry.getCompDirectionFromName(boundaryName)
     argDict['direction'] = dir

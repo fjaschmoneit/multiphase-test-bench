@@ -1,5 +1,5 @@
 High-Level API
-===
+==============
 
     .. autofunction:: Manager.createGeometry
 
