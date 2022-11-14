@@ -86,6 +86,13 @@ def defineBoundaryCondition(field, boundaryName, bcType, **argDict):
     #         field.data[boundary_dir] = neighborField
 
 def calcCollocatedVelocityField(u,v):
+    """
+    Interpolates a collocated velocity field from a staggered velocity field.
+
+    :param u: staggered velocity component
+    :param v: staggered velocity component
+    :return: collocated velocity field
+    """
     col_u = 0.5*(u[west] + u[east])
     col_v = 0.5*(v[north] + v[south])
 
@@ -93,12 +100,24 @@ def calcCollocatedVelocityField(u,v):
     return (col_u, col_v)
 
 def calcVelocityMagnitude( vel ):
+    """
+    Calculates the velocity magnitude.
+    :param vel: collocated velocity field
+    :return: cellField with velocity magnitudes
+    """
     #col_u, col_v = np.dsplit(vel, 2)
     col_u = vel[0]
     col_v = vel[1]
     return np.sqrt( col_u**2 + col_v**2 )
 
 def calcFlowRate(field, boundaryName):
+    """
+    Calculates the flow rate through a given boundary.
+
+    :param field: field name
+    :param boundaryName: name of boundary
+    :return: net flow rate through boundary
+    """
     direction = field.boundary[boundaryName]['direction']
     (boundary_dir, boundary_nb1_dir) = fieldSlice(direction)
 
@@ -109,6 +128,12 @@ def calcFlowRate(field, boundaryName):
 
 
 def listAvailableBoundaryModels(field):
+    """
+    Returns a list of available boundary condition models for the given field.
+
+    :param field: field name
+    :return: list of available boundary models
+    """
     return field.govModel.listAvailableBoundaryModels()
 
 # should directly change the b vector in the lin eq system
@@ -147,6 +172,15 @@ def getField(name):
     return objReg.FIELDS[name]
 
 def initialize(flowmodels, mesh, geometry, passiveFields={}):
+    """
+    Initializing all flow models and includes corresponding fields to global object registry.
+
+    :param flowmodels: dictionary of fields and corresponding flow models
+    :param mesh: mesh object
+    :param geometry: geometry object
+    :param passiveFields: dictionary of additional fields and their respective field type
+    :return: None
+    """
     objReg.MESH = mesh
     objReg.GEOM = geometry
     objReg.LINEAR_SYSTEM = LinearEquationSystems.linearSystem(objReg.MESH)
@@ -178,4 +212,10 @@ def initialize(flowmodels, mesh, geometry, passiveFields={}):
 
 
 def display(field, mesh):
+    """
+    Rudimental visual data analysis tool. Fields are plotted using matplotlib.
+    :param field: field name
+    :param mesh: mesh object
+    :return: None
+    """
     Fields.drawField(field, mesh)

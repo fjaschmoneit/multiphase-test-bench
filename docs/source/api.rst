@@ -1,13 +1,8 @@
 High-Level API
 ==============
 
-    .. autofunction:: Manager.createGeometry
-
-    .. autofunction:: Manager.defineBoundaryCondition
-
-    .. autofunction:: Manager.createMesh
-
-mon moin
+The Manager manages the set-up and execution of a simulation.
+It is not a class itself and only creates/operates relevant objects.
 
     .. automodule:: Manager
         :members:
@@ -16,6 +11,12 @@ mon moin
 
 
 
+..
+    .. autofunction:: Manager.createGeometry
+
+    .. autofunction:: Manager.defineBoundaryCondition
+
+    .. autofunction:: Manager.createMesh
 
 
 
