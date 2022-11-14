@@ -1,4 +1,4 @@
-API
+High-Level API
 ===
 
 
@@ -12,7 +12,7 @@ an api for MTB
 
 
 
-API1
+Core API
 ====
 
 
