@@ -28,7 +28,9 @@ Contents
     :caption: Reference
 
     api
+    validation
 
 .. toctree::
     :caption: Links
 
+    moinmoin
