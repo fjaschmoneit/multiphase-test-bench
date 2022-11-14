@@ -5,7 +5,13 @@ Usage
 Workflow
 --------
 
-click here: :ref:`importMTB`
+:ref:`importMTB`
+:ref:`defineGeomMesh`
+:ref:`selectModels`
+:ref:`definePassiveFields`
+:ref:`initializeSimInstance`
+:ref:`defBCs`
+
 
 
 
@@ -13,9 +19,33 @@ click here: :ref:`importMTB`
 
 
 .. _importMTB:
+Import the Multiphase Test-Bench
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Importing the Multiphase Test-Bench
------------------------------------
+
+
+.. _defineGeomMesh:
+Define the geometry and mesh
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+.. _selectModels:
+Select your flow models
+^^^^^^^^^^^^^^^^^^^^^^^
+
+
+.. _definePassiveFields:
+Define passive fields
+^^^^^^^^^^^^^^^^^^^^^
+
+
+.. _initializeSimInstance:
+Initialize the simulation instance
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. _defBCs:
+Define boundary conditions and initial field
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
 
