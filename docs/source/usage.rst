@@ -19,6 +19,8 @@ Workflow
 - :ref:`definePassiveFields`
 - :ref:`initializeSimInstance`
 - :ref:`defBCs`
+- :ref:`setTranspModelParams`
+- :ref:`execSim`
 
 
 
