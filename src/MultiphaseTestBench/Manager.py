@@ -36,6 +36,7 @@ def createGeometry( typeName, kwargs ):
     :param kwargs: see Geometry constructor arguments
     :return: Geometry object
     """
+
     if typeName == 'rectangle':
         return Geometry(*kwargs)
 
@@ -58,12 +59,14 @@ def getKeyFromValue(dict,value):
             return k
     print("error:\t{value} not fount in dictionary {dict}".format(**locals()))
 
-def defineBoundaryCondition(field, boundaryName, **argDict):
+def defineBoundaryCondition(field, boundaryName, bcType, **argDict):
     """
+    defining a boundary conditions on a specified boundary and field
 
-    :param field:
-    :param boundaryName:
-    :param argDict:
+    :param bcType: ['zeroGradient', 'fixedValue']
+    :param field: variable flied, e.g. U,p, ...
+    :param boundaryName: name to boundary
+    :param argDict: value for bcType=='fixedValue'
     :return: None
     """
     # linking BC in transport model:
@@ -110,10 +113,24 @@ def listAvailableBoundaryModels(field):
 
 # should directly change the b vector in the lin eq system
 def setConstSource(field, value, mesh):
+    """
+    defining a constant scalar source in the entire domain.
+
+    :param field: scalar field
+    :param value: source per volume
+    :param mesh: the computational mesh object
+    :return: None
+    """
     # shape = field.getShape()[internal].shape
     field.govModel.setConstSourceField(  value*mesh.uniformSpacing )
 
 def solve(field):
+    """
+    solve the field as to the field's transport model
+
+    :param field: scalar or vector field
+    :return: None
+    """
 #    field.govModel.updateBoundaries()
     field.govModel.updateFluxes()
     field.govModel.updateSourceField()
@@ -121,6 +138,12 @@ def solve(field):
     return field.govModel.solve()
 
 def getField(name):
+    """
+    retirve a field reference from object registry
+    :param name: field name
+    :return: reference to field object
+    """
+
     return objReg.FIELDS[name]
 
 def initialize(flowmodels, mesh, geometry, passiveFields={}):

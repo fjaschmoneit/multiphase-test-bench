@@ -5,6 +5,12 @@ High-Level API
 
     .. autofunction:: Manager.defineBoundaryCondition
 
+    .. autofunction:: Manager.createMesh
+
+mon moin
+
+    .. automodule:: Manager
+
 
 
 
