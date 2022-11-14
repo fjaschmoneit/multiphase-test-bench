@@ -10,7 +10,7 @@ High-Level API
 mon moin
 
     .. automodule:: Manager
-
+        :members:
 
 
 

@@ -1,7 +1,6 @@
 Installation
 ============
 
-:caption: Getting Started
 
 Latest development branch:
 ^^^^^^^^^^^^^^^^^^^^^^^^^
