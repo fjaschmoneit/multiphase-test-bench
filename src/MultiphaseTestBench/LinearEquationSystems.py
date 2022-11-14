@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.sparse import diags
+#from scipy.sparse import diags
 
 #from scipy.sparse import dia_matrix, bsr_array
 #from scipy.sparse.linalg import spsolve
