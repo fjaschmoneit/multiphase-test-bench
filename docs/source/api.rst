@@ -1,10 +1,11 @@
 High-Level API
 ===
 
+    .. autofunction:: Manager.createGeometry
+
+    .. autofunction:: Manager.defineBoundaryConditions
 
 
-
-an api for MTB
 
 
 
