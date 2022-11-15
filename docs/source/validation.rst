@@ -1,6 +1,10 @@
+Validation
+==========
+
+
+
 my validation tests:
 
-.. toctree::
 
-    ../../validationTests/heatConvectionValidation
+../../validationTests/heatConvectionValidation
 
