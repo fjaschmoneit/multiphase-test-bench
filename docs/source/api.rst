@@ -23,5 +23,5 @@ It is not a class itself and only creates/operates relevant objects.
 Core API
 ========
 
-`Multiphase Test-Bench on Github <https://github.com/fjaschmoneit/multiphase-test-bench>`_
+See `Multiphase Test-Bench on Github <https://github.com/fjaschmoneit/multiphase-test-bench>`_
 
