@@ -33,4 +33,4 @@ Contents
     :caption: Validation
 
     notebooks/heatConvectionValidation
-    ValidationTests/convectionDiffusion
+    notebooks/convectionDiffusion
