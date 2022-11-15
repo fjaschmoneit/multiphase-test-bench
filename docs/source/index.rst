@@ -28,9 +28,8 @@ Contents
     :caption: Reference
 
     api
-    validation
 
 .. toctree::
     :caption: Validation
 
-    ValidationTests/heatConvectionValidation.ipynb
+    heatConvectionValidation
