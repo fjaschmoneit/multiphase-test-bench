@@ -108,10 +108,27 @@ However, they can still be accessed or modified.
 Initialize the simulation instance
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+This step couples the mesh, the fields and the flow models together.
+It creates a global object registry, which will be the entry point for later
+field executions. If passive fields are required the initializaiton will also
+create fields for these and couple them with the respective flow models.
+It requires the flow model dictionary, the mesh, geometry and the (possibly emtpy)
+passive fields dictionary to be passed:
+
+>>> mptb.initialize(flowmodels=myFlowModels, mesh=mesh, geometry=geom, passiveFields=passiveFields )
+
+See :py:func:`Manager.initialize`.
+
+
 .. _defBCs:
 
 Define boundary conditions and initial field
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+After the fields are initialized and tied to a flow model, they must be subjected to
+boundary conditions.
+
+
 
 .. _setTranspModelParams:
 
