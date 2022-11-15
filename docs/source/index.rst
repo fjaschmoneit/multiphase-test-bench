@@ -33,4 +33,4 @@ Contents
     :caption: ValidationTestCaption
 
     validation
-    ValidationTests/heatConvectionValidation
+    notebooks/heatConvectionValidation
