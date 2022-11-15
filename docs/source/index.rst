@@ -22,7 +22,6 @@ Contents
 
     installation
     usage
-    examples
 
 .. toctree::
     :caption: Reference
