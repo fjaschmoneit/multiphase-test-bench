@@ -32,4 +32,4 @@ Contents
 .. toctree::
     :caption: ValidationTestCaption
 
-    ValidationTests/heatConvectionValidation
+    ValidationTests/heatConvectionValidation.ipynb
