@@ -41,4 +41,3 @@ Contents
     :caption: Tutorials
 
     notebooks/convectionDiffusionWithIncreasingVelocity
-    notebooks/lid_driven_cavity
