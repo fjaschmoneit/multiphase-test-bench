@@ -30,6 +30,6 @@ Contents
     api
 
 .. toctree::
-    :caption: Validation
+    :caption: ValidationTestCaption
 
-    heatConvectionValidation
+    ValidationTests/heatConvectionValidation
