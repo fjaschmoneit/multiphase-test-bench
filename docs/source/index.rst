@@ -29,8 +29,3 @@ Contents
 
     api
     validation
-
-.. toctree::
-    :caption: Links
-
-    moinmoin
