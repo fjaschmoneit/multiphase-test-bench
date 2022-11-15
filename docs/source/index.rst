@@ -34,3 +34,11 @@ Contents
 
     notebooks/heatConvectionValidation
     notebooks/convectionDiffusion
+    notebooks/shearFlow
+    notebooks/channelFlow
+
+.. toctree::
+    :caption: Tutorials
+
+    notebooks/convectionDiffusionWithIncreasingVelocity
+    notebooks/lid_driven_cavity
