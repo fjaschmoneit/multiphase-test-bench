@@ -23,7 +23,5 @@ It is not a class itself and only creates/operates relevant objects.
 Core API
 ========
 
-
-
-an api for MTB
+`Multiphase Test-Bench on Github <https://github.com/fjaschmoneit/multiphase-test-bench>`_
 
