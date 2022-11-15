@@ -29,3 +29,8 @@ Contents
 
     api
     validation
+
+.. toctree::
+    :caption: Validation
+
+    ValidationTests/heatConvectionValidation.ipynb
