@@ -6,5 +6,8 @@ Validation
 my validation tests:
 
 
-../../validationTests/heatConvectionValidation
+.. toctree::
+    :caption: vtests:
+
+    ../../validationTests/heatConvectionValidation
 
