@@ -1,13 +1,7 @@
 Validation
 ==========
 
+using a relative path to the local file: notebook_.
 
-
-my validation tests:
-
-
-.. toctree::
-    :caption: vtests:
-
-    heatConvectionValidation
+.. _notebook: ValidationTests/heatConvectionValidation.ipynb
 
