@@ -30,7 +30,7 @@ Contents
     api
 
 .. toctree::
-    :caption: ValidationTestCaption
+    :caption: Validation
 
-    validation
     notebooks/heatConvectionValidation
+    ../../ValidationTests/convectionDiffusion
