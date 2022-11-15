@@ -14,7 +14,7 @@ import sys
 from unittest.mock import MagicMock
 
 sys.path.insert(0, os.path.abspath('../../src/MultiphaseTestBench'))
-sys.path.insert(0, os.path.abspath('../../src/ValidationTests'))
+sys.path.insert(0, os.path.abspath('../../ValidationTests'))
 
 
 class Mock(MagicMock):
