@@ -1,7 +1,6 @@
 Usage
 =====
 
-
 Flow models are developed and executed through Python script.
 The workflow below indicates the neccessary steps for the simulation set-up and execution.
 A simulation instance can be defined within a single script, see for example VALIDATION test,
@@ -21,7 +20,6 @@ Workflow
 - :ref:`defBCs`
 - :ref:`setTranspModelParams`
 - :ref:`execSim`
-
 
 
 
