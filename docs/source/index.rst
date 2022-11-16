@@ -2,8 +2,8 @@ Multiphase Test-Bench - A slim CFD framework for multiphase flows
 =================================================================
 
 .. image:: _static/logo2.png
-    :width: 200px
-    :align: center
+    :width: 300px
+    :align: left
 
 
 The **Multiphase Test-Bench (MTB)** is an open source CFD framework for multiphase problems.
