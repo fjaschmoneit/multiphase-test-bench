@@ -1,7 +1,7 @@
 Multiphase Test-Bench - A slim CFD framework for multiphase flows
 =================================================================
 
-.. image:: _static/logo.png
+.. image:: _static/logo2.png
     :width: 200px
     :align: center
 
