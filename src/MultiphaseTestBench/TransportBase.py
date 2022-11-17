@@ -12,13 +12,15 @@ class transportBase:
         self.boundary = {}
         self.depField = field
 
-        self.constSourceField = Fields.newDataField(shape=MeshConfig.SHAPE_SCALAR_CV, value=0.0)
-        self.sourceField_c = Fields.newDataField(shape=MeshConfig.SHAPE_SCALAR_CV, value=0.0)
-        self.a_e = Fields.newDataField(shape=MeshConfig.SHAPE_SCALAR_CV)
-        self.a_w = Fields.newDataField(shape=MeshConfig.SHAPE_SCALAR_CV)
-        self.a_s = Fields.newDataField(shape=MeshConfig.SHAPE_SCALAR_CV)
-        self.a_n = Fields.newDataField(shape=MeshConfig.SHAPE_SCALAR_CV)
-        self.a_p = Fields.newDataField(shape=MeshConfig.SHAPE_SCALAR_CV)
+        fieldShape = self.depField.getShape()
+
+        self.constSourceField = Fields.newDataField(shape=fieldShape, value=0.0)
+        self.sourceField_c = Fields.newDataField(shape=fieldShape, value=0.0)
+        self.a_e = Fields.newDataField(shape=fieldShape)
+        self.a_w = Fields.newDataField(shape=fieldShape)
+        self.a_s = Fields.newDataField(shape=fieldShape)
+        self.a_n = Fields.newDataField(shape=fieldShape)
+        self.a_p = Fields.newDataField(shape=fieldShape)
 
     def getField(self):
         return self.depField

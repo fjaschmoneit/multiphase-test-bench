@@ -6,7 +6,7 @@ from fieldAccess import *
 import numpy as np
 import ObjectRegistry as objReg
 import TransportModels
-
+import PressureModels
 
 class Geometry:
 
@@ -59,11 +59,11 @@ def getKeyFromValue(dict,value):
             return k
     print("error:\t{value} not fount in dictionary {dict}".format(**locals()))
 
-def defineBoundaryCondition(field, boundaryName, bcType, **argDict):
+def defineBoundaryCondition(field, boundaryName, type, **argDict):
     """
     defining a boundary conditions on a specified boundary and field
 
-    :param bcType: ['zeroGradient', 'fixedValue']
+    :param type: ['zeroGradient', 'fixedValue']
     :param field: variable flied, e.g. U,p, ...
     :param boundaryName: name to boundary
     :param argDict: value for bcType=='fixedValue'
@@ -71,6 +71,7 @@ def defineBoundaryCondition(field, boundaryName, bcType, **argDict):
     """
     # linking BC in transport model:
     dir = Geometry.getCompDirectionFromName(boundaryName)
+    argDict['type'] = type
     argDict['direction'] = dir
     field.govModel.boundary[boundaryName] =  argDict
 

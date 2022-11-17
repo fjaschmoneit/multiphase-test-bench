@@ -176,4 +176,18 @@ class staggeredTransport_v(TransportBase.transportBase):
         gradP_v = Differentiation.grad_v(self.p.data, self.mesh)
         self.sourceField_c[internal_v] += -gradP_v * faceAreas_v[internal_v]
 
+    def updateFluxes(self):
+        self.reset()
+
+        F_u, F_v = self.calcConvFlux()
+        D_u, D_v = self.calcDiffFlux()
+
+        self.a_w = DifferenceSchemes.centralDifference(D_u[west], F_u[west], 'west')
+        self.a_e = DifferenceSchemes.centralDifference(D_u[east], F_u[east], 'east')
+        self.a_n = DifferenceSchemes.centralDifference(D_v[north], F_v[north], 'north')
+        self.a_s = DifferenceSchemes.centralDifference(D_v[south], F_v[south], 'south')
+
+        self.correctBCs()
+
+        self.a_p += (self.a_w + self.a_e + self.a_s + self.a_n )
 

@@ -1,11 +1,10 @@
-
-def printArgs(*args):
-
-    for a in args:
-        print(a)
+import numpy as np
 
 
-b = 2
-c = 4
+A = np.ones((4,4))
 
-printArgs(*locals())
+a = A[0]
+a = [1,2,3,4]
+
+print(A)
+print(a)

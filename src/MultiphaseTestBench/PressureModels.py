@@ -95,7 +95,7 @@ class Pressure():
         self.a_n = self.d_v[north] * faceAreas_v[north]
         self.a_s = self.d_v[south] * faceAreas_v[south]
 
-        self.correctBCs()
+        #self.correctBCs()
 
         self.a_p += self.a_w + self.a_e + self.a_s + self.a_n
 
