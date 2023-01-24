@@ -54,5 +54,8 @@ class cartesian2D():
 
         return (f_u, f_v)
 
+    def getShape(self):
+        return MeshConfig.SHAPE_SCALAR_CV
+
     def getStats(self):
         print( self.nbCells )

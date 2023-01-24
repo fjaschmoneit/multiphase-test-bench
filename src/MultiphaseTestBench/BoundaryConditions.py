@@ -4,28 +4,36 @@ import Interpolation
 
 LARGE = 1e20
 
-
 class scalarBC:
 
-    # @staticmethod
-    # def derichlet_(transportInstance, **argDict):
-    #     # second order accurate
-    #     direction = argDict.get('direction')
-    #     value = argDict.get('value')
-    #
-    #     (boundary_dir, boundary_nb1_dir) = fieldSlice(direction)
-    #     a_dir = transportInstance.getCoefficientsInDirection(direction)
-    #     a_opp_dir = transportInstance.getCoefficientsInOppositeDirection(direction)
-    #
-    #     D = transportInstance.diffusionCoefficient
-    #     fA = transportInstance.mesh.calcFaceArea(direction=direction)[boundary_dir]
-    #     invCellDist = transportInstance.mesh.calcInvCellDistance(direction=direction)[boundary_dir]
-    #     b = D*fA*invCellDist/3.0
-    #
-    #     a_dir[boundary_dir] = 0
-    #     transportInstance.a_p[boundary_dir] += 8.0*b
-    #     a_opp_dir[boundary_dir] += b
-    #     transportInstance.sourceField_c[boundary_dir] += 8.0*b*value + transportInstance.u.data[boundary_dir]
+    @staticmethod
+    def derichlet2(transportInstance, **argDict):
+        # second order accurate
+        direction = argDict.get('direction')
+        value = argDict.get('value')
+
+        (boundary_dir, boundary_nb1_dir) = fieldSlice(direction)
+#        a_dir = transportInstance.getCoefficientsInDirection(direction)
+
+        a_dir = transportInstance.linSystem.getCoefficientsInDirection(direction)
+        a_opp_dir = transportInstance.linSystem.getCoefficientsInOppositeDirection(direction)
+
+        D = transportInstance.diffusionCoefficient
+        fA = transportInstance.mesh.calcFaceArea(direction=direction)[boundary_dir]
+        invCellDist = transportInstance.mesh.calcInvCellDistance(direction=direction)[boundary_dir]
+        b = D*fA*invCellDist/3.0
+
+        # linSys  = transportInstance.linSystem
+        # dirDiagonals = linSys.diagonal
+        #
+        # if(direction=='west'):
+        #     linSys.a_w[bound]
+        #transportInstance.linSystem.a_w[boundary_dir] = 0
+
+        #a_dir[boundary_dir] = 0
+        transportInstance.linSystem.a_p[boundary_dir] += 8.0*b
+        a_opp_dir[boundary_dir] += b
+        transportInstance.linSystem.b[boundary_dir] += 8.0*b*value + transportInstance.u.data[boundary_dir]
 
     # @staticmethod
     # def vonNeumann(transportInstance, **argDict):
@@ -59,14 +67,25 @@ class scalarBC:
         value = argDict.get('value')
 
         (boundary_dir, boundary_nb1_dir) = fieldSlice(direction)
-        a_dir = transportInstance.getCoefficientsInDirection(direction)
-        a_p = transportInstance.getCentreMatrixCoeffs()
-        S_c = transportInstance.sourceField_c
+        a_dir = transportInstance.linSystem.a[transportInstance.linSystem.diagonal[direction]]
+        a_p = transportInstance.linSystem.a_p
+        S_c = transportInstance.linSystem.b
 
         ghostflux = a_dir[boundary_dir]
         a_p[boundary_dir] += 2.0*ghostflux
         S_c[boundary_dir] += 2.0*ghostflux*value
         a_dir[boundary_dir] = 0.0
+
+
+        # (boundary_dir, boundary_nb1_dir) = fieldSlice(direction)
+        # a_dir = transportInstance.getCoefficientsInDirection(direction)
+        # a_p = transportInstance.getCentreMatrixCoeffs()
+        # S_c = transportInstance.sourceField_c
+        #
+        # ghostflux = a_dir[boundary_dir]
+        # a_p[boundary_dir] += 2.0*ghostflux
+        # S_c[boundary_dir] += 2.0*ghostflux*value
+        # a_dir[boundary_dir] = 0.0
 
 
 

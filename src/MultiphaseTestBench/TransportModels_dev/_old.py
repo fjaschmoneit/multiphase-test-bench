@@ -60,54 +60,55 @@ class transportBase:
     def getCentreMatrixCoeffs(self):
         return self.a_p
 
-    def getCoefficientsInDirection(self,direction):
-        directionCoeffDict = {
-            'west' : self.a_w,
-            'east': self.a_e,
-            'north': self.a_n,
-            'south': self.a_s
-        }
-        return directionCoeffDict[direction]
-
-    def getCoefficientsInOppositeDirection(self, direction):
-        oppositeDirectionCoeffDict = {
-            'west': self.a_e,
-            'east': self.a_w,
-            'north': self.a_s,
-            'south': self.a_n
-        }
-        return oppositeDirectionCoeffDict[direction]
+    # def getCoefficientsInDirection(self,direction):
+    #     directionCoeffDict = {
+    #         'west' : self.a_w,
+    #         'east': self.a_e,
+    #         'north': self.a_n,
+    #         'south': self.a_s
+    #     }
+    #     return directionCoeffDict[direction]
+    #
+    # def getCoefficientsInOppositeDirection(self, direction):
+    #     oppositeDirectionCoeffDict = {
+    #         'west': self.a_e,
+    #         'east': self.a_w,
+    #         'north': self.a_s,
+    #         'south': self.a_n
+    #     }
+    #     return oppositeDirectionCoeffDict[direction]
     # def getDepField(self):
     #     return self.depField
 
-    def correctBCs(self):
-        for argDict in self.boundary.values():
-            bcType = argDict['type']
-            self.boundaryModels[bcType](self, **argDict)
-#            self.boundaryModels[bcType](self.depField.data, **argDict)
+#     def correctBCs(self):
+#         for argDict in self.boundary.values():
+#             bcType = argDict['type']
+#             self.boundaryModels[bcType](self, **argDict)
+# #            self.boundaryModels[bcType](self.depField.data, **argDict)
 
-    def updateLinSystem(self):
-        self.linSystem.reset(shape=self.depFieldShape)
-        self.linSystem.set_e_coeffs(self.a_e)
-        self.linSystem.set_w_coeffs(self.a_w)
-        self.linSystem.set_n_coeffs(self.a_n)
-        self.linSystem.set_s_coeffs(self.a_s)
-        self.linSystem.set_p_coeffs(self.a_p)
-        self.linSystem.set_b(self.sourceField_c)
+    # def updateLinSystem(self):
+    #     self.linSystem.reset(shape=self.depFieldShape)
+    #     self.linSystem.set_e_coeffs(self.a_e)
+    #     self.linSystem.set_w_coeffs(self.a_w)
+    #     self.linSystem.set_n_coeffs(self.a_n)
+    #     self.linSystem.set_s_coeffs(self.a_s)
+    #     self.linSystem.set_p_coeffs(self.a_p)
+    #     self.linSystem.set_b(self.sourceField_c)
+    # #
+    # # def solve(self):
+    #     return np.copy(self.linSystem.solve())
+#
+# #------------------ abstract member function ------------------
+#
+#     def setVonNeumann(self, direction):
+#         pass
+#
+#     def setDerichlet(self, direction, value):
+#         pass
+#
+#     def calcConvFlux(self):
+#         pass
+#
+#     def calcDiffFlux(self):
+#         pass
 
-    def solve(self):
-        return np.copy(self.linSystem.solve())
-
-#------------------ abstract member function ------------------
-
-    def setVonNeumann(self, direction):
-        pass
-
-    def setDerichlet(self, direction, value):
-        pass
-
-    def calcConvFlux(self):
-        pass
-
-    def calcDiffFlux(self):
-        pass

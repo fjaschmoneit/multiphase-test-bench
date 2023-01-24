@@ -1,12 +1,12 @@
-import LinearEquationSystems
+#from LinearSystems import LinearEquationSystems_old
 import Mesh
 import Fields
 import MeshConfig
 from fieldAccess import *
 import numpy as np
 import ObjectRegistry as objReg
-import TransportModels
-import PressureModels
+import LinearSystems
+from TransportModels_dev import TransportModels
 
 class Geometry:
 
@@ -161,7 +161,7 @@ def solve(field):
 #    field.govModel.updateBoundaries()
     field.govModel.updateFluxes()
     field.govModel.updateSourceField()
-    field.govModel.updateLinSystem()
+    #field.govModel.updateLinSystem()
     return field.govModel.solve()
 
 def getField(name):
@@ -186,11 +186,13 @@ def initialize(flowmodels, mesh, geometry, passiveFields={}):
     """
     objReg.MESH = mesh
     objReg.GEOM = geometry
-    objReg.LINEAR_SYSTEM = LinearEquationSystems.linearSystem(objReg.MESH)
+#    objReg.LINEAR_SYSTEM = LinearEquationSystems.linearSystem(objReg.MESH)
+#    objReg.LINEAR_SYSTEM = LinearSystems.LinearSystem.linearSystem(objReg.MESH.getShape())
 
     # initializing flow models and corresponding fields:
     for fieldName, transportModelName in flowmodels.items():
-        transportModelInstance = transportModelName(objReg.MESH, objReg.LINEAR_SYSTEM)
+#        transportModelInstance = transportModelName(objReg.MESH, objReg.LINEAR_SYSTEM)
+        transportModelInstance = transportModelName(objReg.MESH)
 
         objReg.FIELDS[fieldName] = transportModelInstance.getField()
         objReg.FIELDS[fieldName].govModel = transportModelInstance
