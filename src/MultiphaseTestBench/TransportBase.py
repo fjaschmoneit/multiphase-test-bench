@@ -95,10 +95,7 @@ class transportBase:
         self.linSystem.set_p_coeffs(self.a_p)
         self.linSystem.set_b(self.sourceField_c)
 
-    def solve(self):
-        return np.copy(self.linSystem.solve())
-
-#------------------ abstract member function ------------------
+#------------------ abstract member functions ------------------
 
     def setVonNeumann(self, direction):
         pass

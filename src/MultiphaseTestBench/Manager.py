@@ -6,6 +6,7 @@ from fieldAccess import *
 import numpy as np
 import ObjectRegistry as objReg
 import TransportModels
+# import TransportModelsSWE
 import PressureModels
 
 class Geometry:
@@ -174,7 +175,7 @@ def getField(name):
 
     return objReg.FIELDS[name]
 
-def initialize(flowmodels, mesh, geometry, passiveFields={}):
+def initialize(flowmodels, mesh, geometry, closure= {}, passiveFields={}):
     """
     Initializing all flow models and includes corresponding fields to global object registry.
 
@@ -211,15 +212,19 @@ def initialize(flowmodels, mesh, geometry, passiveFields={}):
         if isinstance(objReg.FIELDS[fieldname], Fields.baseField):
             govModel = objReg.FIELDS[fieldname].govModel
             if govModel is not None:
-                govModel.linkOtherFields()
+                if len(closure.keys())==0:
+                    govModel.linkOtherFields([])
+                else:
+                    govModel.linkOtherFields(closure[fieldname])
 
 
-def display(field, mesh):
+def display(field, mesh, title):
     """
     Rudimental visual data analysis tool. Fields are plotted using matplotlib.
 
+    :param title: title of figure
     :param field: field name
     :param mesh: mesh object
     :return: None
     """
-    Fields.drawField(field, mesh)
+    Fields.drawField(field, mesh, title)

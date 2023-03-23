@@ -15,10 +15,10 @@ def newField(**kwargs):
     else:
         print("newField must be called with type or data")
 
-def drawField(field, mesh):
-    drawCellField(field, mesh)
+def drawField(field, mesh, title):
+    drawCellField(field, mesh, title)
 
-def drawCellField(cellField, mesh):
+def drawCellField(cellField, mesh, title):
     import matplotlib.pyplot as plt
 
     nbcellsX = mesh.cells_x
@@ -35,6 +35,7 @@ def drawCellField(cellField, mesh):
 
     map = ax.imshow(fieldData, cmap='hot', interpolation='nearest')
 
+    ax.set_title(title)
     ax.set_xticks(np.linspace(-0.5, nbcellsX - 0.5, 5))
     ax.set_xticklabels(np.linspace(0, lenX, 5))
 

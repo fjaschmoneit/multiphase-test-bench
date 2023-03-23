@@ -68,8 +68,6 @@ class scalarBC:
         S_c[boundary_dir] += 2.0*ghostflux*value
         a_dir[boundary_dir] = 0.0
 
-
-
     @staticmethod
     def vonNeumann(transportInstance, **argDict):
         direction = argDict.get('direction')
@@ -77,6 +75,9 @@ class scalarBC:
         (boundary_dir, boundary_nb1_dir) = fieldSlice(direction)
         a_dir = transportInstance.getCoefficientsInDirection(direction)
         a_dir[boundary_dir] = 0.0
+
+
+
 
 class staggered_u:
 

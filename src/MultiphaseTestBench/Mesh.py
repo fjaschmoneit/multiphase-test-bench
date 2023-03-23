@@ -39,7 +39,10 @@ class cartesian2D():
 
 
     def calcFaceArea(self, direction):
-        constArea = self.uniformSpacing**2
+
+        constArea = self.uniformSpacing
+
+#        constArea = self.uniformSpacing**2
 #        constArea = 1
         if direction == 'east' or direction == 'west':
             return Fields.newDataField(shape=MeshConfig.SHAPE_FACES_U, value=constArea)
