@@ -40,3 +40,4 @@ For further reference, take a look at `Multiphase Test-Bench on Github <https://
     :caption: Tutorials
 
     notebooks/convectionDiffusionWithIncreasingVelocity
+    notebooks/shallowWater
