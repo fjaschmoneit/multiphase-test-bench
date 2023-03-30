@@ -16,6 +16,8 @@ class scalarTransport(TransportBase.transportBase):
     def __init__(self, mesh, linSystem ):
 
         self.phi = Fields.newField(shape=MeshConfig.SHAPE_SCALAR_CV)
+        self.phiOldData = self.phi.data.copy()
+        self.heatCapacity = None
 
         super().__init__(mesh=mesh,
                          field = self.phi,
@@ -27,6 +29,9 @@ class scalarTransport(TransportBase.transportBase):
             'fixedValue' : BoundaryConditions.scalarBC.derichlet,
             'zeroGradient' : BoundaryConditions.scalarBC.vonNeumann
         }
+
+    def setHeatCapacity(self, value):
+        self.heatCapacity = value
 
     def listAvailableBoundaryModels(self):
         for name, type in self.boundaryModels.items():
@@ -40,46 +45,82 @@ class scalarTransport(TransportBase.transportBase):
             self.v = objReg.FIELDS[closure[1]]
             self.u = objReg.FIELDS[closure[0]]
 
-    def calcConvFlux(self):
-        faceAreas_u, faceAreas_v = self.mesh.calcFaceAreas()
+    def updateDiffusiveFluxes(self):
+        rCellDist_ew, rCellDist_sn = self.mesh.calcInvCellDistances()
+        faceAreas_ew, faceAreas_sn = self.mesh.calcFaceAreas()
 
+        D = self.diffusionCoefficient
+
+        # mass flow
+        Md_ew = D*rCellDist_ew * faceAreas_ew
+        Md_sn = D*rCellDist_sn * faceAreas_sn
+
+        self.a_e += Md_ew[east]
+        self.a_w += Md_ew[west]
+        self.a_n += Md_sn[north]
+        self.a_s += Md_sn[south]
+
+    def updateConvectiveFluxes(self, diffMethod='UDS'):
+        faceAreas_ew, faceAreas_sn = self.mesh.calcFaceAreas()
         u = self.u.data
         v = self.v.data
 
-        return(
-            u*faceAreas_u,
-            v*faceAreas_v
-        )
+        Mc_ew = u * faceAreas_ew
+        Mc_sn = v * faceAreas_sn
 
-    def calcDiffFlux(self):
-        faceAreas_u, faceAreas_v = self.mesh.calcFaceAreas()
-        rCellDist_u, rCellDist_v = self.mesh.calcInvCellDistances()
-        D = self.diffusionCoefficient
+        if diffMethod=='CDS':
+            lmbd = 0.5      # mesh dependent - for structured, regular cells, lambda = 0.5
+            self.a_w += lmbd*Mc_ew[west]
+            self.a_e += -lmbd*Mc_ew[east]
+            self.a_n += -lmbd*Mc_sn[north]
+            self.a_s += lmbd*Mc_sn[south]
+        elif diffMethod=='UDS':
+            self.a_w += np.maximum(Mc_ew[west],0.0)
+            self.a_e += -np.minimum(Mc_ew[east],0.0)
+            self.a_n += -np.minimum(Mc_sn[north],0.0)
+            self.a_s += np.maximum(Mc_sn[south],0.0)
 
-        return (
-            D * faceAreas_u * rCellDist_u,
-            D * faceAreas_v * rCellDist_v
-        )
-
-    # this includes the advective fluxes when calculating the central coeffs
     def updateFluxes(self):
         self.reset()
 
-        F_u, F_v = self.calcConvFlux()
-        D_u, D_v = self.calcDiffFlux()
-
-        self.a_w = DifferenceSchemes.centralDifference(D_u[west], F_u[west], 'west')
-        self.a_e = DifferenceSchemes.centralDifference(D_u[east], F_u[east], 'east')
-        self.a_n = DifferenceSchemes.centralDifference(D_v[north], F_v[north], 'north')
-        self.a_s = DifferenceSchemes.centralDifference(D_v[south], F_v[south], 'south')
-
+        self.updateDiffusiveFluxes()
+        self.updateConvectiveFluxes('CDS')
         self.correctBCs()
 
-        self.a_p += ( self.a_w + self.a_e + self.a_s + self.a_n + F_u[east] - F_u[west] + F_v[south] - F_v[north] ) # why do I substract these??
-
+        self.a_p += (self.a_w + self.a_e + self.a_s + self.a_n)
 
     def updateSourceField(self):
         self.sourceField_c += self.constSourceField
+
+    def updateTransientCoeffs(self, dt, method):
+        if method == 'implicit':
+            a_p0 = self.heatCapacity*self.mesh.getCellVolumes()/dt
+            self.a_p += a_p0
+            self.sourceField_c += a_p0*self.phi.data
+        elif method == 'explicit':
+            # old height data
+            self.phiOldData = self.phi.data.copy()
+            u = self.u.data
+#            h_ew = np.maximum( phi[west]*u[internal_u], 0.0 ) + np.maximum( -phi[east]*u[internal_u], 0.0)
+            q_ew = u.copy()
+            q_ew[west] = np.maximum(self.phiOldData*u[west], np.zeros(self.phiOldData.shape))
+            q_ew[east] += np.minimum(self.phiOldData*u[east], np.zeros(self.phiOldData.shape))
+
+            correction = dt/self.mesh.getCellVolumes()*(q_ew[east] - q_ew[west])
+
+            self.phi.data = self.phiOldData - correction
+
+            # i'm not solving a linear eq system,
+            # so I just adjust my coefficients such that they
+            # return my already evaluated phi.
+
+            self.a_p.fill(1)
+            self.a_e.fill(0)
+            self.a_w.fill(0)
+            self.a_n.fill(0)
+            self.a_s.fill(0)
+            self.sourceField_c = self.phi.data
+
 
     def solve(self):
         return self.linSystem.solve()
@@ -99,7 +140,6 @@ class staggeredTransport_u(TransportBase.transportBase):
 
     def linkOtherFields(self, closure):
         if len(closure)==0:
-            print("moin")
             self.v = objReg.FIELDS['v']
             self.p = objReg.FIELDS['p']
         else:
@@ -121,7 +161,7 @@ class staggeredTransport_u(TransportBase.transportBase):
         self.a_n += Md_sn[north]
         self.a_s += Md_sn[south]
 
-    def updateConvectiveFluxes(self, diffMethod='UDS'):
+    def updateConvectiveFluxes(self, diffMethod='CDS'):
         faceAreas_ew, faceAreas_sn = self.mesh.calcFaceAreas()
         u = self.u.data
         v = self.v.data
@@ -130,15 +170,15 @@ class staggeredTransport_u(TransportBase.transportBase):
         Mc_sn = Interpolation.toStaggered(v * faceAreas_sn,'u')
 
         if diffMethod=='CDS':
-            lmbd = 0.5
+            lmbd = 0.5      # mesh dependent - for structured, regular cells, lambda = 0.5
             self.a_w += lmbd*Mc_ew[west]
             self.a_e += -lmbd*Mc_ew[east]
             self.a_n += -lmbd*Mc_sn[north]
             self.a_s += lmbd*Mc_sn[south]
         elif diffMethod=='UDS':
             self.a_w += np.maximum(Mc_ew[west],0.0)
-            self.a_e += -np.maximum(Mc_ew[east],0.0)
-            self.a_n += -np.maximum(Mc_sn[north],0.0)
+            self.a_e += -np.minimum(Mc_ew[east],0.0)
+            self.a_n += -np.minimum(Mc_sn[north],0.0)
             self.a_s += np.maximum(Mc_sn[south],0.0)
 
     def updateFluxes(self):
@@ -148,7 +188,7 @@ class staggeredTransport_u(TransportBase.transportBase):
         self.updateConvectiveFluxes()
         self.correctBCs()
 
-        self.a_p += (self.a_w + self.a_e + self.a_s + self.a_n )
+        self.a_p += self.a_w + self.a_e + self.a_s + self.a_n
 
     def updateSourceField(self):
         faceAreas_u, faceAreas_v = self.mesh.calcFaceAreas()
@@ -214,8 +254,8 @@ class staggeredTransport_v(TransportBase.transportBase):
             self.a_s += lmbd*Mc_sn[south]
         elif diffMethod=='UDS':
             self.a_w += np.maximum(Mc_ew[west],0.0)
-            self.a_e += -np.maximum(Mc_ew[east],0.0)
-            self.a_n += -np.maximum(Mc_sn[north],0.0)
+            self.a_e += -np.minimum(Mc_ew[east],0.0)
+            self.a_n += -np.minimum(Mc_sn[north],0.0)
             self.a_s += np.maximum(Mc_sn[south],0.0)
 
 

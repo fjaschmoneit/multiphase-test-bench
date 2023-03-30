@@ -93,8 +93,8 @@ class Pressure():
 
         faceAreas_u, faceAreas_v = self.mesh.calcFaceAreas()
 
-        centreCoeffs_u = transModel_u.getCentreMatrixCoeffs()
-        centreCoeffs_v = transModel_v.getCentreMatrixCoeffs()
+        ap_u = self.u.govModel.a_p
+        ap_v = self.v.govModel.a_p
 
         # SIMPLE ALGORITHM: comment following SIMPLEC block out.
         #
@@ -109,8 +109,8 @@ class Pressure():
         # centreCoeffs_v -= transModel_v.getCoefficientsInDirection('north')
         # centreCoeffs_v -= transModel_v.getCoefficientsInDirection('south')
 
-        self.d_u = faceAreas_u/centreCoeffs_u
-        self.d_v = faceAreas_v/centreCoeffs_v
+        self.d_u = faceAreas_u/ap_u
+        self.d_v = faceAreas_v/ap_v
 
         self.a_e = self.d_u[east] * faceAreas_u[east]
         self.a_w = self.d_u[west] * faceAreas_u[west]

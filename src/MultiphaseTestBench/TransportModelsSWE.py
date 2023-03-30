@@ -1,5 +1,4 @@
 import Differentiation
-import DifferenceSchemes
 import Interpolation
 import TransportBase
 import BoundaryConditions
@@ -7,236 +6,115 @@ from fieldAccess import *
 import MeshConfig
 import ObjectRegistry as objReg
 import Fields
+import numpy as np
 
 LARGE = 1e20
-
-
-class height(TransportBase.transportBase):
-
-    def __init__(self, mesh, linSystem ):
-
-        self.phi = Fields.newField(shape=MeshConfig.SHAPE_SCALAR_CV)
-
-        super().__init__(mesh=mesh,
-                         field = self.phi,
-                         linSystem=linSystem,
-                         depFieldShape=MeshConfig.SHAPE_SCALAR_CV)
-
-        # pointer to boundary functions:
-        self.boundaryModels = {
-            'fixedValue' : BoundaryConditions.scalarBC.derichlet,
-            'zeroGradient' : BoundaryConditions.scalarBC.vonNeumann
-        }
-
-    def listAvailableBoundaryModels(self):
-        for name, type in self.boundaryModels.items():
-            print(name, type)
-
-    def linkOtherFields(self, closure):
-        if len(closure)==0:
-            self.v = objReg.FIELDS['v']
-            self.u = objReg.FIELDS['u']
-        else:
-            self.v = objReg.FIELDS[closure[1]]
-            self.u = objReg.FIELDS[closure[0]]
-
-
-    # this includes the advective fluxes when calculating the central coeffs
-    def updateFluxes(self):
-        self.reset()
-
-        faceAreas_u, faceAreas_v = self.mesh.calcFaceAreas()
-        u = self.u.data
-        v = self.v.data
-
-        F_u = u * faceAreas_u
-        F_v = v * faceAreas_v
-
-        self.a_w = -0.5*F_u[west]
-        self.a_e = 0.5*F_u[east]
-        self.a_n = 0.5*F_v[north]
-        self.a_s = -0.5*F_v[south]
-
-        # self.a_w = DifferenceSchemes.centralDifference(D_u[west], F_u[west], 'west')
-        # self.a_e = DifferenceSchemes.centralDifference(D_u[east], F_u[east], 'east')
-        # self.a_n = DifferenceSchemes.centralDifference(D_v[north], F_v[north], 'north')
-        # self.a_s = DifferenceSchemes.centralDifference(D_v[south], F_v[south], 'south')
-
-        self.correctBCs()
-
-        self.a_p -= ( self.a_w + self.a_e + self.a_s + self.a_n  )
-
-
-    def updateSourceField(self):
-        self.sourceField_c += self.constSourceField
-
-
 
 class staggeredTransport_u(TransportBase.transportBase):
 
     def __init__(self, mesh, linSystem):
         self.u = Fields.newField(shape=MeshConfig.SHAPE_FACES_U)
-
+        self.grav = 9.81
+        self.seabed = None
         super().__init__(mesh=mesh, field=self.u, linSystem=linSystem, depFieldShape=MeshConfig.SHAPE_FACES_U)
 
         self.boundaryModels = {
-            'fixedValue' : self.derichlet,
-            'zeroGradient' : self.vonNeumann
+            'fixedValue' : BoundaryConditions.staggered_u.derichlet,
+            'zeroGradient' : BoundaryConditions.staggered_u.vonNeumann
         }
+
+    def setGravitation(self, value):
+        self.grav = value
+
+    def setSeaBed(self, field):
+        self.seabed = field
 
     def linkOtherFields(self, closure):
         if len(closure)==0:
             self.v = objReg.FIELDS['v']
-            self.p = objReg.FIELDS['p']
+            self.h = objReg.FIELDS['h']
         else:
             self.v = objReg.FIELDS[closure[0]]
-            self.p = objReg.FIELDS[closure[1]]
+            self.h = objReg.FIELDS[closure[1]]
 
-
-    def calcConvFlux(self):
-        faceAreas_u, faceAreas_v = self.mesh.calcFaceAreas()
-
+    def updateConvectiveFluxes(self, diffMethod='CDS'):
+        faceAreas_ew, faceAreas_sn = self.mesh.calcFaceAreas()
         u = self.u.data
         v = self.v.data
+        hu = Interpolation.toStaggered(self.h.data, 'u')
+        hv = Interpolation.toStaggered(self.h.data, 'v')
 
-        return (
-            Interpolation.toStaggered(u * faceAreas_u, 'u'),
-            Interpolation.toStaggered(v * faceAreas_v, 'u')
-        )
+        Mc_ew = Interpolation.toStaggered(hu* u * faceAreas_ew,'u')
+        Mc_sn = Interpolation.toStaggered(hv* v * faceAreas_sn,'u')
+
+        if diffMethod=='CDS':
+            lmbd = 0.5
+            self.a_w += lmbd*Mc_ew[west]
+            self.a_e += -lmbd*Mc_ew[east]
+            self.a_n += -lmbd*Mc_sn[north]
+            self.a_s += lmbd*Mc_sn[south]
+        elif diffMethod=='UDS':
+            self.a_w += np.maximum(Mc_ew[west],0.0)
+            self.a_e += -np.maximum(Mc_ew[east],0.0)
+            self.a_n += -np.maximum(Mc_sn[north],0.0)
+            self.a_s += np.maximum(Mc_sn[south],0.0)
 
     def updateFluxes(self):
         self.reset()
 
-        F_u, F_v = self.calcConvFlux()
-
-        self.a_w = -0.5 * F_u[west]
-        self.a_e = 0.5 * F_u[east]
-        self.a_n = 0.5 * F_v[north]
-        self.a_s = -0.5 * F_v[south]
-
-        #self.correctBCs()
-
-        self.a_p = 1e-15 +  (self.a_w + self.a_e + self.a_s + self.a_n )
-
-    def updateSourceField(self):
-        faceAreas_u, faceAreas_v = self.mesh.calcFaceAreas()
-        gradP_u = Differentiation.grad_u(self.p.data, self.mesh)
-        self.sourceField_c[internal_u] += -gradP_u * faceAreas_u[internal_u]
-
-    def correctBCs(self):
-        for argDict in self.boundary.values():
-            bcType = argDict['type']
-            self.boundaryModels[bcType](self, **argDict)
-
-#            self.boundaryModels[bcType](self.depField.data, **argDict)
-    @staticmethod
-    def vonNeumann(transportInstance, **argDict):
-        direction = argDict.get('direction')
-
-        (boundary_dir, boundary_nb1_dir) = fieldSlice(direction)
-        a_dir = transportInstance.getCoefficientsInDirection(direction)
-        a_dir[boundary_dir] = 0.0
-
-    @staticmethod
-    def derichlet(transportInstance, **argDict):
-        direction = argDict.get('direction')
-        value = argDict.get('value')
-
-        (boundary_dir, boundary_nb1_dir) = fieldSlice(direction)
-        a_dir = transportInstance.getCoefficientsInDirection(direction)
-        a_p = transportInstance.getCentreMatrixCoeffs()
-        S_c = transportInstance.sourceField_c
-
-        if direction == 'west' or direction == 'east':
-            a_p[boundary_dir] += LARGE
-            S_c[boundary_dir] += LARGE * value
-            a_dir[boundary_dir] = 0.0
-
-        elif direction == 'north' or direction == 'south':
-            a_dir[boundary_dir] = 0.0
-
-
-class staggeredTransport_v(TransportBase.transportBase):
-
-    def __init__(self, mesh, linSystem):
-        self.v = Fields.newField(shape=MeshConfig.SHAPE_FACES_V)
-
-        super().__init__(mesh=mesh, field=self.v, linSystem=linSystem, depFieldShape=MeshConfig.SHAPE_FACES_V)
-
-        self.boundaryModels = {
-            'fixedValue' : self.derichlet,
-            'zeroGradient' : self.vonNeumann
-        }
-
-    def linkOtherFields(self, closure):
-        if len(closure)==0:
-            self.u = objReg.FIELDS['u']
-            self.p = objReg.FIELDS['p']
-        else:
-            self.u = objReg.FIELDS[closure[0]]
-            self.p = objReg.FIELDS[closure[1]]
-
-    def calcConvFlux(self):
-        faceAreas_u, faceAreas_v = self.mesh.calcFaceAreas()
-
-        u = self.u.data
-        v = self.v.data
-
-        return (
-            Interpolation.toStaggered(u * faceAreas_u, 'v'),
-            Interpolation.toStaggered(v * faceAreas_v, 'v')
-        )
-
-    def updateSourceField(self):
-        faceAreas_u, faceAreas_v = self.mesh.calcFaceAreas()
-        gradP_v = Differentiation.grad_v(self.p.data, self.mesh)
-        self.sourceField_c[internal_v] += -gradP_v * faceAreas_v[internal_v]
-
-    def updateFluxes(self):
-        self.reset()
-
-        F_u, F_v = self.calcConvFlux()
-
-        self.a_w = -0.5 * F_u[west]
-        self.a_e = 0.5 * F_u[east]
-        self.a_n = 0.5 * F_v[north]
-        self.a_s = -0.5 * F_v[south]
-
+        self.updateConvectiveFluxes(diffMethod='CDS')
         self.correctBCs()
 
-        self.a_p = 1e-15+ (self.a_w + self.a_e + self.a_s + self.a_n )
+        self.a_p += (self.a_w + self.a_e + self.a_s + self.a_n )
 
-        def correctBCs(self):
-            for argDict in self.boundary.values():
-                bcType = argDict['type']
-                self.boundaryModels[bcType](self, **argDict)
+    def calcTimeStep(self):
+        q_ew = self.u.data*Interpolation.toStaggered(self.h.data, 'u')
+        velMax = np.max(np.abs(0.5*(q_ew[east] + q_ew[west])/self.h.data) +np.sqrt(9.81*self.h.data))
+        return 0.5*self.mesh.uniformSpacing/velMax
 
-    #            self.boundaryModels[bcType](self.depField.data, **argDict)
-    @staticmethod
-    def vonNeumann(transportInstance, **argDict):
-        direction = argDict.get('direction')
+    def updateSourceField(self):
+        gradh =  Differentiation.grad_u(self.h.data, self.mesh)
+        g = 9.81
+        self.sourceField_c[internal_u] -= g*gradh*self.mesh.getCellVolumes()
 
-        (boundary_dir, boundary_nb1_dir) = fieldSlice(direction)
-        a_dir = transportInstance.getCoefficientsInDirection(direction)
-        a_dir[boundary_dir] = 0.0
+    def updateTransientCoeffs(self,dt, method):
+        h_u = Interpolation.toStaggered(self.h.data, 'u')
+        a_p0 = h_u * self.mesh.getCellVolumes() / dt
+        if method == 'implicit':
+            self.a_p += a_p0
+            self.sourceField_c += a_p0 * self.u.data
+        elif method == 'explicit':
+            self.a_p = a_p0
+            self.sourceField_c += (a_p0 + self.a_w + self.a_e + self.a_s + self.a_n) * self.u.data
+        elif method == 'semi-implicit':
+            hnew = self.h.data
+            hold = self.h.govModel.phiOldData
+            uold = self.u.data.copy()
 
-    @staticmethod
-    def derichlet(transportInstance, **argDict):
-        direction = argDict.get('direction')
-        value = argDict.get('value')
+            q_ew = uold.copy()
+            q_ew[west] = np.maximum(hold*uold[west], np.zeros(hold.shape))
+            q_ew[east] += np.minimum(hold*uold[east], np.zeros(hold.shape))
+            q_c = 0.5*(q_ew[east] + q_ew[west])
+            u_c = np.maximum( uold[west], np.zeros(hold.shape)) + np.minimum( uold[east], np.zeros(hold.shape))
 
-        (boundary_dir, boundary_nb1_dir) = fieldSlice(direction)
-        a_dir = transportInstance.getCoefficientsInDirection(direction)
-        a_p = transportInstance.getCentreMatrixCoeffs()
-        S_c = transportInstance.sourceField_c
+            self.u.data[internal_u] = Interpolation.toStaggered(hold,'u')[internal_u]*uold[internal_u] \
+                          -dt/self.mesh.getCellVolumes()*(
+                                              q_c[east]*u_c[east] - q_c[west]*u_c[west]
+                                              + 0.5*self.grav*(np.power(hnew[east],2) -np.power(hnew[west],2))
+                                              +self.grav*Interpolation.toStaggered(hnew,'u')[internal_u]*(self.seabed[east] - self.seabed[west])
+                                      )
 
-        if direction == 'north' or direction == 'south':
-            a_p[boundary_dir] += LARGE
-            S_c[boundary_dir] += LARGE * value
-            a_dir[boundary_dir] = 0.0
+            self.u.data /= Interpolation.toStaggered(hnew, 'u')
 
-        elif direction == 'east' or direction == 'west':
+            self.a_p.fill(1)
+            self.a_e.fill(0)
+            self.a_w.fill(0)
+            self.a_n.fill(0)
+            self.a_s.fill(0)
+            self.sourceField_c = self.u.data
 
-            a_dir[boundary_dir] = 0.0
+#            print(0.1/np.max( 0.5*np.abs( q_ew[east]+q_ew[west]/hold ) ))
 
 
+    def solve(self):
+        return self.linSystem.solve()

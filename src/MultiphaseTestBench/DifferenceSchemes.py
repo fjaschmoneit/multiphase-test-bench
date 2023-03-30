@@ -9,4 +9,5 @@ def centralDifference(D,F,orientation):
     else:
         alpha = -1.0
 
-    return D +alpha*0.5*F
+    #return D +alpha*0.5*F
+#    return D +alpha*F

@@ -15,8 +15,9 @@ class cartesian2D():
         self.cells_y = int(res*self.lenY)
         self.nbCells = self.cells_x*self.cells_y
 
+        self.dimension = 1 if self.cells_y == 1 else 2
+
         MeshConfig.SHAPE_SCALAR_CV =            (self.cells_y, self.cells_x)
-#        MeshConfig.SHAPE_SCALAR_CV_GHOST =      (self.cells_y+2, self.cells_x+2)
         MeshConfig.SHAPE_FACES_U =              (self.cells_y , self.cells_x + 1)
         MeshConfig.SHAPE_FACES_V =              (self.cells_y + 1, self.cells_x)
         MeshConfig.SHAPE_VERTEX =               (self.cells_y + 1, self.cells_x + 1)
@@ -40,8 +41,8 @@ class cartesian2D():
 
     def calcFaceArea(self, direction):
 
-        constArea = self.uniformSpacing
-
+        constArea = 1 if self.dimension else self.uniformSpacing
+#        constArea = self.uniformSpacing
 #        constArea = self.uniformSpacing**2
 #        constArea = 1
         if direction == 'east' or direction == 'west':
@@ -56,6 +57,9 @@ class cartesian2D():
         f_v = self.calcFaceArea('south')
 
         return (f_u, f_v)
+
+    def getCellVolumes(self):
+        return self.uniformSpacing**self.dimension
 
     def getStats(self):
         print( self.nbCells )

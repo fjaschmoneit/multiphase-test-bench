@@ -76,7 +76,14 @@ class scalarBC:
         a_dir = transportInstance.getCoefficientsInDirection(direction)
         a_dir[boundary_dir] = 0.0
 
+    @staticmethod
+    def symmetry(transportInstance, **argDict):
+        direction = argDict.get('direction')
 
+        (boundary_dir, boundary_nb1_dir) = fieldSlice(direction)
+        a_dir = transportInstance.getCoefficientsInDirection(direction)
+        a_dir[boundary_dir] = 0.0
+        #transportInstance.a_p[boundary_dir] +=
 
 
 class staggered_u:

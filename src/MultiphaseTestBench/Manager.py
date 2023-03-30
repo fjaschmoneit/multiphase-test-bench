@@ -6,7 +6,7 @@ from fieldAccess import *
 import numpy as np
 import ObjectRegistry as objReg
 import TransportModels
-# import TransportModelsSWE
+import TransportModelsSWE
 import PressureModels
 
 class Geometry:
@@ -152,6 +152,23 @@ def setConstSource(field, value, mesh):
     # shape = field.getShape()[internal].shape
     field.govModel.setConstSourceField(  value*mesh.uniformSpacing )
 
+def transientSolve(field, dt, method):
+    """
+    solve the field as to the field's transient transport model
+
+    :param field: scalar or vector field
+    :return: None
+    """
+    field.govModel.updateFluxes()
+    field.govModel.updateSourceField()
+    field.govModel.updateTransientCoeffs(dt, method)
+
+
+    field.govModel.updateLinSystem()
+    return field.govModel.solve()
+
+
+
 def solve(field):
     """
     solve the field as to the field's transport model
@@ -175,7 +192,7 @@ def getField(name):
 
     return objReg.FIELDS[name]
 
-def initialize(flowmodels, mesh, geometry, closure= {}, passiveFields={}):
+def initialize(flowmodels, mesh, geometry, closure={}, passiveFields={}):
     """
     Initializing all flow models and includes corresponding fields to global object registry.
 
@@ -185,6 +202,8 @@ def initialize(flowmodels, mesh, geometry, closure= {}, passiveFields={}):
     :param passiveFields: dictionary of additional fields and their respective field type
     :return: None
     """
+    if closure is None:
+        closure = {}
     objReg.MESH = mesh
     objReg.GEOM = geometry
     objReg.LINEAR_SYSTEM = LinearEquationSystems.linearSystem(objReg.MESH)

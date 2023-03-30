@@ -2,11 +2,15 @@ from fieldAccess import *
 
 
 def grad_u(field, mesh):
+    # assuming u is a collocated field.
+    # returns a face-centered field
     rCellDist_u = mesh.calcInvCellDistance('west')
     return (field[east] - field[west])*rCellDist_u[internal_u]
 
 
 def grad_v(field, mesh):
+    # assuming v is a collocated field.
+    # returns a face-centered field
     rCellDist_v = mesh.calcInvCellDistance('north')
     return (field[north] - field[south])*rCellDist_v[internal_v]
 
